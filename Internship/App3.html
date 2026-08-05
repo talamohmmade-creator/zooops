@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Worldwide Zoo Consultants</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg:#F2F5F8;
+    --panel:#FFFFFF;
+    --panel-2:#F5F8FA;
+    --border:#E6EBF0;
+    --text:#212B36;
+    --dim:#8996A3;
+    --dim-2:#B0BAC3;
+    --green:#16A6A0;
+    --green-dim:#E1F5F3;
+    --blue:#4C8DF5;
+    --blue-dim:#E7EFFE;
+    --amber:#F2B33D;
+    --amber-dim:#FDF2DC;
+    --purple:#8B7FD1;
+    --purple-dim:#EDE9FB;
+    --red:#EF6461;
+    --red-dim:#FCE8E7;
+    --navy:#22314B;
+    --shadow:0 1px 2px rgba(20,30,45,0.04), 0 8px 20px rgba(20,30,45,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; color:var(--text);
+    font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(180deg, rgba(242,245,248,0.97), rgba(242,245,248,0.99)),
+      url('https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=1600&q=80');
+    background-size:cover;
+    background-attachment:fixed;
+    background-position:center;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  .app{ display:flex; min-height:640px; }
+
+  /* ================= SIDEBAR ================= */
+  .sidebar{ width:232px; background:rgba(255,255,255,0.88); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-right:1px solid var(--border); padding:20px 14px; flex-shrink:0; }
+  .brand-row{ display:flex; align-items:center; gap:10px; padding:2px 6px 18px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+  .logo-badge{ width:40px; height:36px; border-radius:10px; background:linear-gradient(135deg, var(--green), #0E8A85); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:0.3px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(22,166,160,0.3); }
+  .brand-name{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12.5px; line-height:1.25; }
+  .brand-ver{ font-size:11px; color:var(--dim-2); font-family:'IBM Plex Mono',monospace; }
+
+  .side-label{ font-size:10.5px; letter-spacing:1.2px; color:var(--dim-2); font-weight:600; padding:0 8px; margin:14px 0 8px; text-transform:uppercase; }
+  .role-row{ display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; cursor:pointer; margin-bottom:3px; border:1px solid transparent; }
+  .role-row .dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .role-row .name{ font-size:13.5px; color:var(--dim); font-weight:500; }
+  .role-row.active{ border-color:currentColor; }
+  .role-row.active .name{ font-weight:600; }
+  .role-row[data-role="keeper"].active{ background:var(--green-dim); color:var(--green); }
+  .role-row[data-role="supervisor"].active{ background:var(--blue-dim); color:var(--blue); }
+  .role-row[data-role="management"].active{ background:var(--amber-dim); color:var(--amber); }
+  .role-row[data-role="admin"].active{ background:var(--purple-dim); color:var(--purple); }
+  .role-row[data-role="keeper"] .dot{ background:var(--green); }
+  .role-row[data-role="supervisor"] .dot{ background:var(--blue); }
+  .role-row[data-role="management"] .dot{ background:var(--amber); }
+  .role-row[data-role="admin"] .dot{ background:var(--purple); }
+
+  .nav-item{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; font-size:13.5px; color:var(--dim); font-weight:500; cursor:pointer; margin-bottom:2px; }
+  .nav-item:hover{ background:var(--panel-2); }
+  .nav-item.active{ background:var(--panel-2); color:var(--text); }
+  .nav-item.active .nav-icon{ color:var(--active-color, var(--green)); }
+  .nav-icon{ width:16px; text-align:center; font-size:14px; }
+
+  /* ================= MAIN ================= */
+  .main{ flex:1; padding:24px 30px 40px; overflow:auto; }
+  .topbar{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+  .page-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:23px; }
+  .page-sub{ font-size:12.5px; color:var(--dim); margin-top:3px; }
+  .role-chip{ font-size:11px; font-weight:600; padding:5px 11px; border-radius:20px; }
+  .chip-keeper{ background:var(--green-dim); color:var(--green); }
+  .chip-supervisor{ background:var(--blue-dim); color:var(--blue); }
+  .chip-management{ background:var(--amber-dim); color:var(--amber); }
+  .chip-admin{ background:var(--purple-dim); color:var(--purple); }
+
+  .grid{ display:grid; gap:14px; }
+  .g5{ grid-template-columns:repeat(5,1fr); }
+  .g3{ grid-template-columns:repeat(3,1fr); }
+  .g2{ grid-template-columns:1fr 1fr; }
+  .card{ background:rgba(255,255,255,0.92); backdrop-filter:blur(6px); border:1px solid var(--border); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow); transition:transform .15s ease, box-shadow .15s ease; }
+  .card:hover{ box-shadow:0 4px 8px rgba(20,30,45,0.06), 0 14px 28px rgba(20,30,45,0.08); }
+  .stat-num{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:24px; color:var(--text); }
+  .stat-label{ font-size:11.5px; color:var(--dim); margin-top:3px; }
+  .stat-icon{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; margin-bottom:10px; }
+  .stat-icon.i-green{ background:var(--green-dim); }
+  .stat-icon.i-amber{ background:var(--amber-dim); }
+  .stat-icon.i-red{ background:var(--red-dim); }
+  .stat-icon.i-blue{ background:var(--blue-dim); }
+  .stat-icon.i-purple{ background:var(--purple-dim); }
+  .card-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .card-title{ font-size:13px; font-weight:600; }
+  .card-more{ color:var(--dim-2); cursor:pointer; }
+
+  /* legend */
+  .legend{ display:flex; flex-direction:column; gap:6px; margin-top:10px; font-size:11.5px; }
+  .legend-row{ display:flex; justify-content:space-between; align-items:center; }
+  .legend-key{ display:flex; align-items:center; gap:7px; color:var(--dim); }
+  .legend-dot{ width:7px; height:7px; border-radius:50%; }
+  .legend-val{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+
+  /* task list (keeper) */
+  .task-row{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
+  .task-row:last-child{ border-bottom:none; }
+  .task-check{ width:19px; height:19px; border-radius:6px; border:2px solid var(--dim-2); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent; }
+  .task-check.done{ background:var(--green); border-color:var(--green); color:#FFFFFF; }
+  .task-main{ flex:1; }
+  .task-text{ font-size:13.5px; }
+  .task-text.done{ text-decoration:line-through; color:var(--dim-2); }
+  .task-meta{ font-size:11px; color:var(--dim-2); margin-top:2px; }
+  .task-tag{ font-family:'IBM Plex Mono',monospace; font-size:10px; padding:3px 8px; border-radius:10px; background:var(--amber-dim); color:var(--amber); font-weight:600; }
+  .upload-btn{ font-size:11.5px; font-weight:600; padding:6px 11px; border-radius:7px; background:var(--green-dim); color:var(--green); border:1px solid transparent; cursor:pointer; }
+  .upload-btn:hover{ border-color:var(--green); }
+  .evidence-thumb{ width:34px; height:34px; border-radius:6px; object-fit:cover; }
+  .evidence-composer{ width:360px; flex-shrink:0; border:1px solid var(--border); border-radius:14px; background:var(--panel-2); padding:9px; display:flex; flex-direction:column; gap:8px; }
+  .evidence-preview-row{ display:flex; gap:8px; align-items:center; overflow:hidden; }
+  .evidence-card{ width:96px; height:58px; border-radius:10px; border:1px solid var(--border); background:var(--panel); overflow:hidden; display:flex; align-items:center; gap:7px; padding:7px; flex-shrink:0; }
+  .evidence-card.photo{ padding:0; background:var(--panel); }
+  .evidence-card.photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .evidence-card.video{ background:linear-gradient(135deg,#22314B,#4C8DF5); color:#fff; justify-content:center; font-size:18px; }
+  .evidence-card.pdf{ background:linear-gradient(135deg,#fff,#fff5f5); }
+  .evidence-icon{ width:28px; height:34px; border-radius:6px; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
+  .evidence-name{ font-size:10.5px; font-weight:700; line-height:1.25; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .evidence-meta{ font-size:9.5px; color:var(--dim); margin-top:2px; }
+  .evidence-more{ min-width:30px; height:30px; border-radius:10px; background:var(--green-dim); color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; }
+  .evidence-input{ width:100%; border:none; background:transparent; min-height:42px; resize:vertical; font-family:'Inter',sans-serif; font-size:12px; color:var(--text); outline:none; }
+  .evidence-bottom{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .evidence-tools{ display:flex; gap:6px; }
+  .evidence-tool{ width:28px; height:28px; border-radius:9px; border:1px solid var(--border); background:var(--panel); color:var(--dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .evidence-tool:hover{ border-color:var(--green); color:var(--green); }
+  .evidence-send{ width:30px; height:30px; border-radius:50%; border:none; background:var(--green); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; }
+  .manager-evidence{ display:grid; grid-template-columns:1fr 1.2fr; gap:16px; align-items:start; margin-bottom:14px; }
+  .manager-preview-grid{ display:grid; grid-template-columns:150px 150px; gap:12px; align-items:start; }
+  .manager-file-preview{ border:1px solid var(--border); border-radius:12px; background:var(--panel-2); padding:10px; min-height:160px; cursor:pointer; }
+  .manager-file-preview:hover{ border-color:var(--green); }
+  .pdf-page-thumb{ height:108px; border-radius:8px; background:#fff; border:1px solid var(--border); position:relative; overflow:hidden; margin-bottom:8px; box-shadow:inset 0 0 0 8px #fff; }
+  .pdf-page-thumb::before{ content:"PDF"; position:absolute; left:14px; top:14px; width:32px; height:24px; border-radius:6px; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; box-shadow:48px 2px 0 #22314B, 48px 20px 0 #dfe6ec, 48px 36px 0 #dfe6ec, 48px 52px 0 #dfe6ec, 48px 68px 0 #dfe6ec; }
+  .pdf-page-thumb::after{ content:"Keeper Evidence Report"; position:absolute; left:14px; right:14px; top:30px; color:var(--text); font-size:10px; font-weight:800; line-height:1.25; }
+  .photo-stack{ height:108px; position:relative; margin-bottom:8px; }
+  .photo-stack img{ position:absolute; width:108px; height:92px; object-fit:cover; border-radius:10px; border:3px solid #fff; box-shadow:0 8px 18px rgba(20,30,45,0.16); }
+  .photo-stack img:nth-child(1){ left:0; top:14px; transform:rotate(-5deg); }
+  .photo-stack img:nth-child(2){ left:22px; top:6px; transform:rotate(4deg); }
+  .photo-stack img:nth-child(3){ left:44px; top:0; }
+  .manager-file-title{ font-size:12px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .manager-file-meta{ font-size:10.5px; color:var(--dim); margin-top:2px; }
+  .manager-note{ border-left:3px solid var(--green); background:var(--green-dim); border-radius:8px; padding:10px 12px; font-size:12.5px; line-height:1.5; color:var(--text); }
+
+  /* buttons */
+  .btn{ font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); cursor:pointer; }
+  .btn.primary{ background:linear-gradient(135deg, var(--green), #0E8A85); color:#FFFFFF; border-color:transparent; box-shadow:0 4px 10px rgba(22,166,160,0.25); }
+  .btn.ghost{ background:transparent; }
+
+  /* table (supervisor/admin) */
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:11px; color:var(--dim-2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; padding:8px 10px; border-bottom:1px solid var(--border); }
+  td{ padding:11px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+  tr:last-child td{ border-bottom:none; }
+  .badge{ font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:10px; }
+  .badge-ok{ background:var(--green-dim); color:var(--green); }
+  .badge-pending{ background:var(--amber-dim); color:var(--amber); }
+  .badge-overdue{ background:var(--red-dim); color:var(--red); }
+  .avatar{ width:26px; height:26px; border-radius:50%; background:var(--panel-2); display:inline-flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; margin-right:8px; vertical-align:middle; }
+
+  .toggle{ width:34px; height:19px; border-radius:20px; background:var(--panel-2); border:1px solid var(--border); position:relative; cursor:pointer; display:inline-block; }
+  .toggle.on{ background:var(--green-dim); border-color:var(--green); }
+  .toggle::after{ content:""; position:absolute; top:1px; left:1px; width:15px; height:15px; border-radius:50%; background:var(--dim); transition:.15s; }
+  .toggle.on::after{ transform:translateX(15px); background:var(--green); }
+
+  .hidden{ display:none !important; }
+
+  /* ============ ANIMAL INTELLIGENCE MODULE ============ */
+  .profile-card{ display:flex; gap:13px; align-items:flex-start; }
+  .profile-photo{ width:74px; height:74px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+  .profile-name{ font-weight:700; font-size:15px; }
+  .profile-meta{ color:var(--dim); font-size:12px; margin:3px 0 8px; }
+  .mini-tags{ display:flex; flex-wrap:wrap; gap:6px; }
+  .mini-tag{ font-size:10.5px; font-weight:700; padding:4px 8px; border-radius:12px; background:var(--panel-2); color:var(--dim); border:1px solid var(--border); }
+  .mini-tag.risk{ background:var(--red-dim); color:var(--red); border-color:transparent; }
+  .mini-tag.ready{ background:var(--green-dim); color:var(--green); border-color:transparent; }
+  .mini-tag.warn{ background:var(--amber-dim); color:var(--amber); border-color:transparent; }
+  .info-panel{ background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:12px; }
+  .info-label{ font-size:10px; color:var(--dim-2); font-weight:700; text-transform:uppercase; letter-spacing:.6px; margin-bottom:5px; }
+  .info-value{ font-size:12.5px; line-height:1.45; color:var(--text); }
+  .checklist-form{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .checklist-form .wide{ grid-column:span 2; }
+  .select-input, .text-area{
+    width:100%; border:1px solid var(--border); background:var(--panel-2); border-radius:9px;
+    padding:10px 11px; font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text);
+  }
+  .text-area{ min-height:76px; resize:vertical; }
+  .risk-strip{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .risk-item{ border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--panel-2); }
+  .risk-score{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:22px; }
+  .timeline{ display:flex; flex-direction:column; gap:9px; }
+  .timeline-row{ display:flex; gap:10px; align-items:flex-start; }
+  .timeline-time{ width:46px; font-family:'IBM Plex Mono',monospace; color:var(--dim); font-size:11px; padding-top:2px; }
+  .timeline-dot{ width:9px; height:9px; border-radius:50%; background:var(--green); margin-top:5px; flex-shrink:0; }
+  .timeline-copy{ font-size:12.5px; color:var(--text); line-height:1.45; }
+  .calendar-layout{ display:grid; grid-template-columns:1.15fr .85fr; gap:14px; align-items:start; }
+  .calendar-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+  .calendar-day-name{ font-size:10px; color:var(--dim-2); font-weight:700; text-transform:uppercase; letter-spacing:.6px; text-align:center; padding:3px 0; }
+  .calendar-cell{ min-height:82px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2); padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .calendar-cell.muted{ opacity:.45; }
+  .calendar-cell.today{ border-color:var(--green); background:var(--green-dim); }
+  .calendar-date{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); }
+  .calendar-pill{ font-size:10px; font-weight:700; border-radius:10px; padding:3px 6px; background:var(--blue-dim); color:var(--blue); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .calendar-pill.urgent{ background:var(--red-dim); color:var(--red); }
+  .calendar-pill.medical{ background:var(--purple-dim); color:var(--purple); }
+  .reminder-row{ display:flex; gap:10px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--border); }
+  .reminder-row:last-child{ border-bottom:none; }
+  .reminder-date{ width:58px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border); text-align:center; padding:7px 4px; flex-shrink:0; }
+  .reminder-date .d{ font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; }
+  .reminder-date .m{ font-size:10px; color:var(--dim); font-weight:700; text-transform:uppercase; }
+  .reminder-title{ font-size:13px; font-weight:700; }
+  .reminder-meta{ font-size:11.5px; color:var(--dim); margin-top:3px; line-height:1.45; }
+  .day-switcher{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .day-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px; }
+  .day-sub{ font-size:12px; color:var(--dim); margin-top:3px; }
+  .arrow-btn{ min-width:116px; height:38px; border-radius:9px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); cursor:pointer; font-size:12px; font-weight:700; padding:0 12px; }
+  .arrow-btn:hover{ border-color:var(--green); color:var(--green); background:var(--green-dim); }
+  .task-detail-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:7px; }
+  .task-detail{ font-size:11px; color:var(--dim); background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:6px 8px; }
+  .task-detail b{ display:block; color:var(--text); font-size:11.5px; margin-bottom:2px; }
+  .task-note{ width:280px; min-height:48px; resize:vertical; border:1px solid var(--border); border-radius:8px; background:var(--panel-2); color:var(--text); font-family:'Inter',sans-serif; font-size:12px; padding:8px 9px; }
+  .task-note:focus{ outline:none; border-color:var(--green); background:var(--panel); }
+  .task-actions{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .enclosure-link{ color:var(--green); font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .enclosure-picker{ margin-bottom:14px; display:flex; align-items:center; justify-content:center; padding:20px 18px; }
+  .enclosure-picker-btn{ border:1px solid var(--green); background:var(--green-dim); color:var(--green); border-radius:12px; padding:12px 18px; min-width:260px; cursor:pointer; font-family:'Inter',sans-serif; box-shadow:0 8px 18px rgba(22,166,160,0.10); }
+  .enclosure-picker-btn:hover{ background:#e5f7f2; transform:translateY(-1px); }
+  .enclosure-picker-title{ display:block; font-size:15px; font-weight:800; color:var(--text); margin-bottom:3px; }
+  .enclosure-picker-meta{ display:block; font-size:12px; font-weight:700; color:var(--green); }
+  .task-detail-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .task-detail-title{ font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:800; color:var(--text); }
+  .task-detail-sub{ color:var(--dim); font-size:12px; margin-top:3px; }
+  .enclosure-summary{ display:none; margin-bottom:14px; }
+  .enclosure-summary.show{ display:block; }
+  .enclosure-summary-grid{ display:flex; flex-direction:column; gap:8px; }
+  .enclosure-summary-item{ background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .enclosure-summary-item:hover{ border-color:var(--green); }
+  .enclosure-summary-item.complete{ background:#c8f7c5; border-color:#22a447; }
+  .enclosure-summary-item.selected{ box-shadow:0 0 0 2px rgba(22,166,160,0.18); border-color:var(--green); }
+  .enclosure-summary-item b{ display:block; font-size:12.5px; color:var(--text); margin-bottom:3px; }
+  .enclosure-summary-item span{ color:var(--dim); }
+  .enclosure-summary-item.complete b{ color:#155724; }
+  .enclosure-summary-item.complete span{ color:#2f6f3a; }
+  .enclosure-summary-main{ display:flex; align-items:flex-start; gap:10px; min-width:0; }
+  .enclosure-index{ width:24px; height:24px; border-radius:50%; background:var(--panel); border:1px solid var(--border); color:var(--dim); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
+  .enclosure-summary-item.complete .enclosure-index{ background:var(--green); border-color:var(--green); color:#fff; }
+  .enclosure-summary-item.complete .badge-ok{ background:#22a447; color:#fff; }
+  .enclosure-status-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .urgent-mark{ width:26px; height:26px; border-radius:8px; background:#fff4d6; border:1px solid #f3c96a; color:#b77900; display:inline-flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; line-height:1; white-space:nowrap; }
+  .clear-filter{ color:var(--green); font-weight:700; cursor:pointer; font-size:12px; }
+  .enclosure-empty{ text-align:center; padding:26px 18px; color:var(--dim); font-size:13px; }
+  .enclosure-empty b{ display:block; color:var(--text); font-size:15px; margin-bottom:6px; }
+  .animal-card{ cursor:pointer; }
+  .animal-card:hover{ transform:translateY(-2px); }
+  .profile-hero{
+    display:grid; grid-template-columns:220px 1fr; gap:18px; align-items:stretch;
+  }
+  .profile-hero img{ width:100%; height:190px; object-fit:cover; border-radius:12px; display:block; }
+  .profile-facts{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
+  .profile-fact{ background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:11px; }
+  .profile-fact .k{ font-size:10px; color:var(--dim-2); font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+  .profile-fact .v{ margin-top:5px; font-size:12.5px; color:var(--text); line-height:1.35; }
+
+  /* modal */
+  .overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:60; align-items:center; justify-content:center; }
+  .overlay.show{ display:flex; }
+  .modal{ width:320px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px; }
+  .modal h3{ margin:0 0 4px; font-family:'Space Grotesk',sans-serif; font-size:16px; }
+  .modal .sub{ font-size:12px; color:var(--dim); margin-bottom:14px; }
+  .capture-box{ height:170px; border:1.5px dashed var(--border); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--dim); font-size:12.5px; cursor:pointer; background:var(--panel-2); position:relative; overflow:hidden; }
+  .capture-box img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+  .stamp-overlay{ position:absolute; bottom:6px; left:6px; right:6px; background:rgba(0,0,0,0.55); border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:#fff; line-height:1.5; }
+  .modal-actions{ display:flex; gap:8px; margin-top:14px; }
+  .modal-actions .btn{ flex:1; }
+  .close-x{ float:right; cursor:pointer; color:var(--dim); }
+
+  /* ============ LOGIN ============ */
+  #login-screen{
+    position:fixed; inset:0; z-index:100;
+    background-image:
+      linear-gradient(180deg, rgba(10,20,18,0.22), rgba(10,20,18,0.38)),
+      url('https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=1800&q=85');
+    background-size:cover;
+    background-position:center;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .login-card{
+    width:370px; background:rgba(255,255,255,0.94);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,0.5);
+    border-radius:20px; padding:34px 32px 28px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.35);
+  }
+  .login-logo{ display:flex; align-items:center; gap:10px; margin-bottom:26px; }
+  .login-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px; line-height:1.25; }
+  .login-sub{ font-size:12px; color:var(--dim-2); font-family:'IBM Plex Mono',monospace; }
+  .field-label{ font-size:12px; font-weight:600; color:var(--text); margin:14px 0 6px; }
+  .field-input{
+    width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--border);
+    background:var(--panel-2); font-family:'Inter',sans-serif; font-size:13.5px; color:var(--text);
+  }
+  .field-input:focus{ outline:none; border-color:var(--green); background:var(--panel); }
+  .login-row{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:12px; }
+  .remember{ display:flex; align-items:center; gap:6px; color:var(--dim); }
+  .forgot-link{ color:var(--green); font-weight:600; cursor:pointer; }
+  .login-btn{
+    width:100%; margin-top:20px; padding:12px; border-radius:10px; border:none;
+    background:linear-gradient(135deg, var(--green), #0E8A85); color:#fff; font-weight:600; font-size:13.5px; cursor:pointer;
+    box-shadow:0 8px 20px rgba(22,166,160,0.3);
+  }
+  .login-btn:hover{ opacity:0.92; }
+  .login-error{ color:var(--red); font-size:12px; margin-top:10px; display:none; }
+  .divider-row{ display:flex; align-items:center; gap:10px; margin:20px 0 14px; color:var(--dim-2); font-size:11px; }
+  .divider-row::before, .divider-row::after{ content:""; flex:1; height:1px; background:var(--border); }
+  .role-quick{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+  .role-quick-btn{
+    border:1px solid var(--border); background:var(--panel-2); border-radius:9px;
+    padding:9px 4px; text-align:center; font-size:11px; font-weight:600; color:var(--dim); cursor:pointer;
+  }
+  .role-quick-btn:hover{ border-color:var(--green); color:var(--green); }
+  .app.hidden{ display:none !important; }
+
+  /* ============ NOTIFICATION BELL ============ */
+  .bell-wrap{ position:relative; display:flex; align-items:center; gap:10px; }
+  .bell-btn{
+    width:34px; height:34px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; font-size:15px;
+  }
+  .bell-dot{
+    position:absolute; top:5px; right:6px; width:8px; height:8px; border-radius:50%;
+    background:var(--red); border:2px solid #fff; display:none;
+  }
+  .bell-dot.show{ display:block; }
+  .bell-panel{
+    display:none; position:absolute; top:42px; right:0; width:280px; max-height:320px; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 20px 40px rgba(20,30,45,0.15);
+    z-index:70; padding:8px;
+  }
+  .bell-panel.show{ display:block; }
+  .bell-item{ padding:9px 10px; border-radius:8px; font-size:12px; border-bottom:1px solid var(--border); }
+  .bell-item:last-child{ border-bottom:none; }
+  .bell-item .t{ font-weight:600; color:var(--text); }
+  .bell-item .s{ color:var(--dim); font-size:11px; margin-top:2px; }
+
+  /* ============ TOAST ============ */
+  #toast-stack{ position:fixed; top:18px; right:18px; z-index:200; display:flex; flex-direction:column; gap:10px; }
+  .toast{
+    width:300px; background:var(--panel); border-left:4px solid var(--red); border-radius:10px;
+    box-shadow:0 20px 40px rgba(20,30,45,0.2); padding:12px 14px; animation:slideIn .25s ease;
+  }
+  .toast .tt{ font-weight:700; font-size:12.5px; display:flex; align-items:center; gap:6px; }
+  .toast .ts{ font-size:11.5px; color:var(--dim); margin-top:4px; line-height:1.4; }
+  .toast .ta{ margin-top:8px; display:flex; gap:6px; }
+  .toast .ta button{ font-size:11px; font-weight:600; padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); cursor:pointer; }
+  @keyframes slideIn{ from{ transform:translateX(30px); opacity:0; } to{ transform:translateX(0); opacity:1; } }
+
+  /* ============ LIVE MONITORING ============ */
+  .cam-card{ background:var(--panel); border-radius:14px; overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow); position:relative; }
+  .cam-img-wrap{ position:relative; height:140px; }
+  .cam-img-wrap img{ width:100%; height:100%; object-fit:cover; display:block; filter:saturate(0.9); }
+  .cam-live-tag{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.6); color:#fff; font-size:9.5px; font-weight:700; padding:3px 7px; border-radius:4px; display:flex; align-items:center; gap:4px; }
+  .cam-live-dot{ width:6px; height:6px; border-radius:50%; background:var(--red); animation:pulse 1.4s infinite; }
+  @keyframes pulse{ 0%{opacity:1;} 50%{opacity:0.3;} 100%{opacity:1;} }
+  .cam-ring{ position:absolute; inset:0; border:3px solid transparent; border-radius:14px 14px 0 0; pointer-events:none; }
+  .cam-card.alert .cam-ring{ border-color:var(--red); animation:ringPulse 1.6s infinite; }
+  .cam-ai-btn{
+    position:absolute; top:8px; right:8px; width:28px; height:28px; border-radius:50%;
+    background:rgba(255,255,255,0.92); border:1px solid var(--border); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2); z-index:2;
+  }
+  .cam-ai-btn:hover{ border-color:var(--green); }
+  #cam-ai-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:80; align-items:center; justify-content:center; }
+  #cam-ai-overlay.show{ display:flex; }
+  .cam-ai-modal{ width:340px; height:460px; background:var(--panel); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 60px rgba(0,0,0,0.35); }
+  .cam-ai-head{ background:linear-gradient(135deg, var(--green), #0E8A85); color:#fff; padding:12px 14px; display:flex; align-items:center; gap:10px; }
+  .cam-ai-head img{ width:34px; height:34px; border-radius:8px; object-fit:cover; }
+  .cam-ai-head .n{ font-weight:700; font-size:13.5px; }
+  .cam-ai-head .s{ font-size:10.5px; opacity:0.85; }
+  .cam-ai-close{ margin-left:auto; cursor:pointer; opacity:0.9; }
+  .cam-ai-body{ flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:9px; background:var(--panel-2); }
+  .cam-ai-input-row{ display:flex; gap:8px; padding:10px; border-top:1px solid var(--border); background:var(--panel); }
+  .cam-ai-input-row input{ flex:1; border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:12.5px; font-family:'Inter',sans-serif; }
+  .cam-ai-input-row input:focus{ outline:none; border-color:var(--green); }
+  .cam-ai-send{ width:36px; height:36px; border-radius:8px; background:var(--green); color:#fff; border:none; cursor:pointer; font-size:14px; }
+  .cam-ai-suggest{ display:flex; flex-wrap:wrap; gap:6px; padding:0 14px 10px; background:var(--panel-2); }
+  .cam-ai-chip{ font-size:11px; padding:5px 9px; border-radius:14px; background:var(--panel); border:1px solid var(--border); color:var(--dim); cursor:pointer; }
+  .cam-ai-chip:hover{ border-color:var(--green); color:var(--green); }
+  @keyframes ringPulse{ 0%{ box-shadow:0 0 0 0 rgba(239,100,97,0.5);} 70%{ box-shadow:0 0 0 8px rgba(239,100,97,0);} 100%{ box-shadow:0 0 0 0 rgba(239,100,97,0);} }
+  .cam-body{ padding:11px 13px 13px; }
+  .cam-name{ font-weight:600; font-size:13.5px; }
+  .cam-enc{ font-size:11px; color:var(--dim); margin-bottom:6px; }
+  .cam-status{ font-size:11px; font-weight:600; padding:4px 9px; border-radius:8px; display:inline-block; }
+  .cam-status.ok{ background:var(--green-dim); color:var(--green); }
+  .cam-status.alert{ background:var(--red-dim); color:var(--red); }
+
+  /* ============ CHAT WIDGET ============ */
+  #chat-fab{
+    position:fixed; bottom:22px; right:22px; z-index:90;
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg, var(--green), #0E8A85);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 10px 24px rgba(22,166,160,0.4); font-size:22px; color:#fff;
+  }
+  #chat-fab .fab-dot{ position:absolute; top:2px; right:2px; width:11px; height:11px; border-radius:50%; background:var(--red); border:2px solid #fff; }
+  #chat-panel{
+    position:fixed; bottom:88px; right:22px; z-index:90; width:320px; height:420px;
+    background:var(--panel); border-radius:16px; box-shadow:0 30px 60px rgba(20,30,45,0.25);
+    display:none; flex-direction:column; overflow:hidden; border:1px solid var(--border);
+  }
+  #chat-panel.show{ display:flex; }
+  .chat-head{ background:linear-gradient(135deg, var(--green), #0E8A85); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px; }
+  .chat-head .n{ font-weight:700; font-size:13.5px; }
+  .chat-head .s{ font-size:10.5px; opacity:0.85; }
+  .chat-body{ flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:9px; background:var(--panel-2); }
+  .msg{ max-width:80%; font-size:12.5px; padding:8px 11px; border-radius:12px; line-height:1.4; }
+  .msg.bot{ background:var(--panel); border:1px solid var(--border); align-self:flex-start; border-bottom-left-radius:3px; }
+  .msg.user{ background:var(--green); color:#fff; align-self:flex-end; border-bottom-right-radius:3px; }
+  .chat-input-row{ display:flex; gap:8px; padding:10px; border-top:1px solid var(--border); background:var(--panel); }
+  .chat-input-row input{ flex:1; border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:12.5px; font-family:'Inter',sans-serif; }
+  .chat-input-row input:focus{ outline:none; border-color:var(--green); }
+  .chat-send{ width:36px; height:36px; border-radius:8px; background:var(--green); color:#fff; border:none; cursor:pointer; font-size:14px; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-badge">WZC</div>
+      <div>
+        <div class="login-title">Worldwide Zoo Consultants</div>
+        <div class="login-sub">v2.4.1</div>
+      </div>
+    </div>
+
+    <div class="field-label">Email or staff ID</div>
+    <input class="field-input" id="login-email" type="text" placeholder="keeper@zooops.local" value="keeper@zooops.local">
+
+    <div class="field-label">Password</div>
+    <input class="field-input" id="login-password" type="password" placeholder="Password123" value="Password123">
+
+    <div class="login-row">
+      <span class="remember"><input type="checkbox" checked style="accent-color:#16A6A0;"> Remember me</span>
+      <span class="forgot-link">Forgot password?</span>
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error">Enter your email/staff ID and password to continue.</div>
+
+    <div class="divider-row">DEMO · QUICK SIGN-IN AS</div>
+    <div class="role-quick">
+      <div class="role-quick-btn" onclick="quickLogin('keeper')">Keeper</div>
+      <div class="role-quick-btn" onclick="quickLogin('supervisor')">Supervisor</div>
+      <div class="role-quick-btn" onclick="quickLogin('management')">Management</div>
+      <div class="role-quick-btn" onclick="quickLogin('admin')">Admin</div>
+    </div>
+  </div>
+</div>
+
+<div class="app hidden" id="app-root">
+
+  <!-- ============ SIDEBAR ============ -->
+  <div class="sidebar">
+    <div class="brand-row">
+      <div class="logo-badge">WZC</div>
+      <div>
+        <div class="brand-name">Worldwide Zoo Consultants</div>
+        <div class="brand-ver">v2.4.1</div>
+      </div>
+    </div>
+
+    <div class="side-label">Switch Role</div>
+    <div class="role-row active" data-role="keeper"><span class="dot"></span><span class="name">Keeper</span></div>
+    <div class="role-row" data-role="supervisor"><span class="dot"></span><span class="name">Supervisor</span></div>
+    <div class="role-row" data-role="management"><span class="dot"></span><span class="name">Management</span></div>
+    <div class="role-row" data-role="admin"><span class="dot"></span><span class="name">Admin</span></div>
+
+    <div class="side-label">Navigation</div>
+    <div id="nav-container"></div>
+
+    <div class="nav-item" style="margin-top:22px; border-top:1px solid var(--border); padding-top:14px; border-radius:0;" onclick="signOut()">
+      <span class="nav-icon">⎋</span>Sign out
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main" id="main"></div>
+</div>
+
+<!-- ============ UPLOAD MODAL ============ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <span class="close-x" onclick="closeModal()">✕</span>
+    <h3 id="modal-title">Upload Evidence</h3>
+    <div class="sub" id="modal-sub">Attach a photo to confirm this task is complete.</div>
+    <div class="capture-box" id="capture-box" onclick="simulateCapture()">
+      <div id="capture-placeholder">📷<br>Tap to capture photo</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="submitEvidence()">Submit &amp; Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOASTS ============ -->
+<div id="toast-stack"></div>
+
+<!-- ============ CHAT WIDGET ============ -->
+<div id="chat-fab" onclick="toggleChat()">
+  💬<span class="fab-dot" id="chat-fab-dot" style="display:none;"></span>
+</div>
+<div id="chat-panel">
+  <div class="chat-head">
+    <div>
+      <div class="n">WZC Assistant</div>
+      <div class="s">Ask about tasks, animals, or alerts</div>
+    </div>
+  </div>
+  <div class="chat-body" id="chat-body"></div>
+  <div class="chat-input-row">
+    <input id="chat-input" type="text" placeholder="Type a question…" onkeydown="if(event.key==='Enter') sendChat();">
+    <button class="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ============ CAMERA AI MODAL ============ -->
+<div id="cam-ai-overlay">
+  <div class="cam-ai-modal">
+    <div class="cam-ai-head">
+      <img id="cam-ai-photo" src="" alt="">
+      <div>
+        <div class="n" id="cam-ai-title">Ask AI</div>
+        <div class="s" id="cam-ai-sub">About this camera</div>
+      </div>
+      <span class="cam-ai-close" onclick="closeCamAI()">✕</span>
+    </div>
+    <div class="cam-ai-body" id="cam-ai-body"></div>
+    <div class="cam-ai-suggest" id="cam-ai-suggest"></div>
+    <div class="cam-ai-input-row">
+      <input id="cam-ai-input" type="text" placeholder="Ask anything about this animal…" onkeydown="if(event.key==='Enter') sendCamAI();">
+      <button class="cam-ai-send" onclick="sendCamAI()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const NAV = {
+  keeper: [
+    {id:'my-tasks', icon:'✓', label:'My Tasks'},
+    {id:'my-animals', icon:'\u{1F981}', label:'My Animals'},
+    {id:'feeding-checklist', icon:'F', label:'Feeding Checklist'},
+    {id:'monitoring', icon:'📡', label:'Live Monitoring'},
+    {id:'evidence', icon:'📷', label:'Evidence Log'},
+    {id:'notes', icon:'✎', label:'Notes'},
+  ],
+  supervisor: [
+    {id:'task-board', icon:'▤', label:'Task Board'},
+    {id:'monitoring', icon:'M', label:'Live Monitoring'},
+    {id:'behavior-review', icon:'AI', label:'AI Behavior Alerts'},
+    {id:'review', icon:'🔎', label:'Review Evidence'},
+    {id:'compliance', icon:'☑', label:'SOP Compliance'},
+    {id:'team', icon:'◎', label:'Team'},
+  ],
+  management: [
+    {id:'dashboard', icon:'▦', label:'Dashboard'},
+    {id:'animal-intel', icon:'AI', label:'Animal Intelligence'},
+    {id:'calendar', icon:'Cal', label:'Calendar'},
+    {id:'sites', icon:'⌂', label:'Sites'},
+    {id:'reports', icon:'▤', label:'Reports'},
+  ],
+  admin: [
+    {id:'users', icon:'◎', label:'Users'},
+    {id:'calendar', icon:'Cal', label:'Calendar'},
+    {id:'species-profiles', icon:'SP', label:'Species Profiles'},
+    {id:'roles', icon:'⚿', label:'Roles & Permissions'},
+    {id:'config', icon:'⚙', label:'System Config'},
+    {id:'audit', icon:'▤', label:'Audit Log'},
+  ],
+};
+const ROLE_COLOR = {keeper:'var(--green)', supervisor:'var(--blue)', management:'var(--amber)', admin:'var(--purple)'};
+const ROLE_CHIP = {keeper:'chip-keeper', supervisor:'chip-supervisor', management:'chip-management', admin:'chip-admin'};
+
+/* ---------------- BACKEND CONNECTION ---------------- */
+const API_BASE_URL = 'http://localhost:5000/api';
+let authToken = localStorage.getItem('zooopsToken') || '';
+let currentUser = JSON.parse(localStorage.getItem('zooopsUser') || 'null');
+let backendTasksLoaded = false;
+
+const DEMO_LOGIN = {
+  keeper: { email: 'keeper@zooops.local', password: 'Password123' },
+  supervisor: { email: 'supervisor@zooops.local', password: 'Password123' },
+  management: { email: 'manager@zooops.local', password: 'Password123' },
+  admin: { email: 'admin@zooops.local', password: 'Password123' }
+};
+
+let currentRole = 'keeper';
+let currentTab = 'my-tasks';
+let pendingTaskIndex = null;
+let selectedAnimalName = null;
+let COMPLETED_REMINDER_IDS = [];
+let selectedTaskDate = '2026-07-13';
+let REMINDER_NOTES = {};
+let selectedEnclosureFilter = null;
+let selectedZoneFilter = null;
+let selectedReviewDate = '2026-07-13';
+let selectedReviewZone = null;
+let selectedReviewEnclosure = null;
+
+const KEEPER_TASKS = [
+  {id:"T-101", date:"2026-07-13", time:"07:30", text:"Clean & inspect enclosure", tag:"Cleaning", animal:"Sultan", enclosure:"Savannah Deck 2", feed:"Not applicable", details:"Check gates, glass, locks, water bowl, and shaded resting area.", done:true, evidence:true, approval:"approved", note:"Area checked and cleaned before feeding."},
+  {id:"T-102", date:"2026-07-13", time:"08:00", text:"Feeding confirmation — Sultan", tag:"Feeding", animal:"Sultan", enclosure:"Savannah Deck 2", feed:"Raw meat 6kg", details:"Confirm full portion served and record leftover amount.", done:true, evidence:true, approval:"approved", note:"Ate full portion; no leftover."},
+  {id:"T-103", date:"2026-07-13", time:"09:00", text:"Diet prep check", tag:"Diet", animal:"Rafiki", enclosure:"Primate House", feed:"Leafy greens 1.2kg + fruit mix 400g", details:"Prepare Rafiki's portion separately from other primates.", done:false, evidence:false, note:""},
+  {id:"T-104", date:"2026-07-13", time:"10:30", text:"Water quality test", tag:"Water", animal:"Bimo", enclosure:"Aviary North", feed:"Not applicable", details:"Check water station clarity and refill with fresh water.", done:false, evidence:false, note:""},
+  {id:"T-105", date:"2026-07-13", time:"13:00", text:"Enrichment placement — Rafiki", tag:"Enrichment", animal:"Rafiki", enclosure:"Primate House", feed:"Puzzle feeder with approved fruit portion", details:"Place enrichment after midday observation.", done:true, evidence:true, approval:"pending", note:"Puzzle feeder placed; Rafiki interacted normally."},
+  {id:"T-106", date:"2026-07-13", time:"14:00", text:"Animal observation — Coral", tag:"Observation", animal:"Coral", enclosure:"Highland Enclosure", feed:"Bamboo + fruit observation", details:"Watch pacing, appetite, and hiding behavior for 20 minutes.", done:false, evidence:false, note:""},
+  {id:"T-107", date:"2026-07-13", time:"15:30", text:"Safety inspection", tag:"Safety", animal:"Nadia", enclosure:"East Yard fencing", feed:"Not applicable", details:"Inspect east fence line and gate locks.", done:false, evidence:false, note:""},
+  {id:"T-108", date:"2026-07-13", time:"08:20", text:"Browse refill check", tag:"Feeding", animal:"Kito", enclosure:"Savannah Deck 1", feed:"Acacia browse 5kg + hay top-up", details:"Refill browse rack and record leftover branches.", done:false, evidence:false, note:""},
+  {id:"T-108B", date:"2026-07-13", time:"08:50", text:"Browse rack photo evidence", tag:"Evidence", animal:"Kito", enclosure:"Savannah Deck 1", feed:"Acacia browse station", details:"Upload browse rack photo and note if Kito approached the station.", done:true, evidence:true, approval:"update-requested", supervisorComment:"Please upload a clearer photo of the browse rack after refill, including the leftover tray.", note:"Browse rack refilled and Kito approached after keeper moved back."},
+  {id:"T-109", date:"2026-07-13", time:"09:40", text:"Gate and shade inspection", tag:"Safety", animal:"Mara", enclosure:"Savannah Yard 3", feed:"Not applicable", details:"Check side gate latch, shade cloth, and water trough level.", done:false, evidence:false, note:""},
+  {id:"T-110", date:"2026-07-13", time:"10:10", text:"Holding area cleaning", tag:"Cleaning", animal:"Zara", enclosure:"Giraffe Holding", feed:"Not applicable", details:"Sweep holding area and confirm bedding is dry.", done:true, evidence:true, approval:"approved", note:"Holding area cleaned before browse delivery."},
+  {id:"T-111", date:"2026-07-13", time:"11:20", text:"Reptile heat lamp check", tag:"Safety", animal:"Iggy", enclosure:"Reptile House A", feed:"Not applicable", details:"Confirm basking lamp temperature and misting cycle.", done:false, evidence:false, note:""},
+  {id:"T-112", date:"2026-07-13", time:"12:00", text:"Tortoise feed confirmation", tag:"Feeding", animal:"Tala", enclosure:"Tortoise Yard", feed:"Leafy greens 900g + squash 300g", details:"Serve diet separately and record leftover greens.", done:false, evidence:false, note:""},
+  {id:"T-113", date:"2026-07-13", time:"12:30", text:"Meerkat tunnel inspection", tag:"Cleaning", animal:"Milo", enclosure:"Meerkat Habitat", feed:"Mealworm enrichment portion", details:"Check tunnel entrance, sand level, and enrichment tray.", done:true, evidence:true, approval:"pending", note:"Tunnel entrance clear and enrichment placed."},
+  {id:"T-114", date:"2026-07-13", time:"13:45", text:"Parrot feed station reset", tag:"Feeding", animal:"Luma", enclosure:"Aviary South", feed:"Pellets 300g + fruit cup", details:"Separate Luma's fruit cup and remove old pellets.", done:false, evidence:false, note:""},
+  {id:"T-115", date:"2026-07-13", time:"15:00", text:"Penguin pool check", tag:"Water", animal:"Pip", enclosure:"Penguin Pool", feed:"Fish portion after pool test", details:"Record water clarity and confirm pool edge is clear.", done:false, evidence:false, note:""},
+  {id:"T-116", date:"2026-07-13", time:"16:10", text:"Nocturnal den prep", tag:"Cleaning", animal:"Nox", enclosure:"Nocturnal House", feed:"Insectivore diet 250g", details:"Prepare den before evening rotation and confirm hide boxes.", done:false, evidence:false, note:""},
+  {id:"T-117", date:"2026-07-13", time:"17:00", text:"Elephant supplement check", tag:"Medical", animal:"Nadia", enclosure:"Elephant Yard", feed:"Hay 12kg + supplement sachet", details:"Confirm supplement was mixed into Nadia's evening feed.", done:false, evidence:false, note:""},
+  {id:"T-118", date:"2026-07-13", time:"17:30", text:"Barn water refill", tag:"Water", animal:"Nadia", enclosure:"Elephant Barn", feed:"Not applicable", details:"Refill barn water station and check floor drainage.", done:false, evidence:false, note:""},
+  {id:"T-201", date:"2026-07-14", time:"08:00", text:"Feeding confirmation — Kito", tag:"Feeding", animal:"Kito", enclosure:"Savannah Deck 1", feed:"Acacia browse 8kg + hay 4kg", details:"Record browse intake and any leftover branches.", done:false, evidence:false, note:""},
+  {id:"T-202", date:"2026-07-14", time:"11:00", text:"Perch and water check — Bimo", tag:"Water", animal:"Bimo", enclosure:"Aviary North", feed:"Fresh water + pellet station check", details:"Confirm upper perch is clean and water station is filled.", done:false, evidence:false, note:""},
+  {id:"T-301", date:"2026-07-15", time:"09:00", text:"Injection confirmation — Sultan", tag:"Medical", animal:"Sultan", enclosure:"Savannah Deck 2", feed:"Not applicable", details:"Assist vet team and record injection confirmation.", done:false, evidence:false, note:""},
+];
+
+const MY_ANIMALS = [
+  {name:"Sultan", species:"African Lion", photo:"https://loremflickr.com/300/200/lion,zoo/all?lock=1", enclosure:"Savannah Deck 2"},
+  {name:"Kito", species:"Reticulated Giraffe", photo:"https://loremflickr.com/300/200/giraffe,zoo/all?lock=3", enclosure:"Savannah Deck 1"},
+  {name:"Bimo", species:"Sun Conure", photo:"https://loremflickr.com/300/200/conure,parrot/all?lock=4", enclosure:"Aviary North"},
+  {name:"Rafiki", species:"Chimpanzee", photo:"https://loremflickr.com/300/200/chimpanzee,zoo/all?lock=6", enclosure:"Primate House"},
+];
+
+const SPECIES_PROFILES = [
+  {
+    species:"African Lion",
+    diet:"Carnivore, large meat portions",
+    active:"Evening and night; long daytime rest is normal",
+    social:"Pride-based, should stay socially responsive",
+    warning:"Repeated no appetite, isolation, heavy breathing, limping, unusual aggression",
+    rules:["No food intake for 2 meals", "Isolation from group for 4+ hours", "Low movement plus no appetite"]
+  },
+  {
+    species:"Reticulated Giraffe",
+    diet:"Browse, hay, leaves, pellets",
+    active:"Daytime browsing with frequent slow movement",
+    social:"Herd-aware, calm scanning behavior",
+    warning:"Not browsing, neck lowered for long periods, lameness, rumen inactivity",
+    rules:["Skipped browse session", "Standing still for 3+ hours", "Leftover browse above 40%"]
+  },
+  {
+    species:"Sun Conure",
+    diet:"Pellets, fruit, vegetables, seeds in controlled portions",
+    active:"Highly active and vocal in daylight",
+    social:"Pair/flock responsive",
+    warning:"Fluffed feathers, low perch movement, silence, no feeding, labored breathing",
+    rules:["No movement for 2+ hours in daylight", "No feeding observed", "Quiet plus low perch activity"]
+  },
+  {
+    species:"Red Panda",
+    diet:"Bamboo, fruit, leaf-eater biscuits",
+    active:"Crepuscular; calm climbing and grooming expected",
+    social:"Mostly solitary",
+    warning:"Repeated pacing, no appetite, hiding too long, abnormal stool",
+    rules:["Pacing on same route for 30+ minutes", "No food intake", "Hiding for 4+ hours"]
+  }
+];
+
+const ANIMAL_BASELINES = [
+  {animal:"Sultan", species:"African Lion", normal:"Rests after 08:00 feeding, finishes 80-100% meat portion, patrols once before noon.", risk:"Normal", readiness:"Ready for AI", photo:"https://loremflickr.com/300/200/lion,zoo/all?lock=1"},
+  {animal:"Kito", species:"Reticulated Giraffe", normal:"Browses from 06:30-09:00, slow walking loop every 90 minutes, calm near platform.", risk:"Normal", readiness:"Ready for AI", photo:"https://loremflickr.com/300/200/giraffe,zoo/all?lock=3"},
+  {animal:"Bimo", species:"Sun Conure", normal:"Moves between upper perches every 10-20 minutes and vocalizes during keeper rounds.", risk:"Warning", readiness:"Needs more data", photo:"https://loremflickr.com/300/200/conure,parrot/all?lock=4"},
+  {animal:"Coral", species:"Red Panda", normal:"Grooms early, climbs after feeding, rests hidden during hot hours.", risk:"Urgent", readiness:"Ready for AI", photo:"https://loremflickr.com/300/200/redpanda/all?lock=7"}
+];
+
+const FEEDING_CHECKLISTS = [
+  {animal:"Sultan", meal:"Morning", due:"07:15", food:"Raw meat 6kg", status:"Completed", intake:"Full", leftover:"0%", behavior:"Alert, ate full portion, resting normally"},
+  {animal:"Kito", meal:"Morning browse", due:"06:30", food:"Acacia browse + hay", status:"Completed", intake:"Full", leftover:"5%", behavior:"Normal browsing and walking"},
+  {animal:"Bimo", meal:"Morning", due:"07:30", food:"Pellets + fruit", status:"Attention", intake:"Partial", leftover:"45%", behavior:"Low perch movement, quiet"},
+  {animal:"Coral", meal:"Bamboo check", due:"08:00", food:"Bamboo + fruit", status:"Urgent", intake:"None", leftover:"100%", behavior:"Repeated pacing, did not eat"}
+];
+
+const CALENDAR_REMINDERS = [
+  {id:1, animal:"Sultan", title:"Vitamin injection", type:"Medical", date:"2026-07-15", time:"09:00", repeat:"One time", priority:"Urgent", enclosure:"Savannah Deck 2", feed:"Not applicable", details:"Assigned by management for vet support.", checklist:"Injection confirmation — Sultan"},
+  {id:2, animal:"Kito", title:"Hoof inspection", type:"Medical", date:"2026-07-27", time:"10:30", repeat:"Every 2 weeks", priority:"Normal", enclosure:"Savannah Deck 1", feed:"Not applicable", details:"Routine hoof inspection with animal care team.", checklist:"Medical hoof check — Kito"},
+  {id:3, animal:"Bimo", title:"Weight check", type:"Medical", date:"2026-07-13", time:"11:00", repeat:"Every 2 weeks", priority:"Warning", enclosure:"Aviary North", feed:"Pellets + fruit after weighing", details:"Weigh Bimo and record any low-activity notes.", checklist:"Weight check — Bimo"},
+  {id:4, animal:"Coral", title:"Appetite recheck", type:"Observation", date:"2026-07-13", time:"14:00", repeat:"One time", priority:"Warning", enclosure:"Highland Enclosure", feed:"Bamboo + fruit intake check", details:"Observe appetite and pacing after bamboo check.", checklist:"Appetite recheck — Coral"}
+];
+
+const AI_REVIEWS = [
+  {animal:"Coral", level:"Urgent", reason:"Pacing route repeated for 40 minutes plus no food intake.", feeding:"Did not eat bamboo check", camera:"Pacing 40 min", action:"Send keeper now / notify vet"},
+  {animal:"Bimo", level:"Warning", reason:"Low daylight movement and partial food intake.", feeding:"Ate partial, 45% leftover", camera:"Low movement 3+ hrs", action:"Recheck in 30 min"}
+];
+
+const TEAM = [
+  {name:"Sebastian Smith", role:"Keeper", tasksToday:"7/8", status:"ok"},
+  {name:"M. Khalid", role:"Keeper", tasksToday:"5/8", status:"pending"},
+  {name:"A. Yusuf", role:"Keeper", tasksToday:"8/8", status:"ok"},
+  {name:"R. Fatima", role:"Keeper", tasksToday:"3/8", status:"overdue"},
+];
+
+const REVIEW_QUEUE = [
+  {task:"Feeding confirmation — Sultan", keeper:"S. Ahmed", time:"08:12", status:"pending"},
+  {task:"Enclosure cleaning — Deck 2", keeper:"S. Ahmed", time:"07:45", status:"pending"},
+  {task:"Water quality — Aviary North", keeper:"M. Khalid", time:"—", status:"overdue"},
+];
+
+const USERS = [
+  {name:"Sebastian Smith", email:"s.smith@zoo.ae", role:"Keeper", active:true},
+  {name:"M. Khalid", email:"m.khalid@zoo.ae", role:"Keeper", active:true},
+  {name:"S. Ahmed", email:"s.ahmed@zoo.ae", role:"Supervisor", active:true},
+  {name:"D. Osei", email:"d.osei@zoo.ae", role:"Management", active:true},
+  {name:"L. Grant", email:"l.grant@zoo.ae", role:"Admin", active:false},
+];
+
+const CAMERAS = [
+  {animal:"Sultan", species:"African Lion", enclosure:"Savannah Deck 2", photo:"https://loremflickr.com/300/200/lion,zoo/all?lock=1", status:"ok", detail:"Normal resting activity"},
+  {animal:"Nadia", species:"Asian Elephant", enclosure:"East Yard", photo:"https://loremflickr.com/300/200/elephant,zoo/all?lock=2", status:"ok", detail:"Normal movement pattern"},
+  {animal:"Coral", species:"Red Panda", enclosure:"Highland Enclosure", photo:"https://loremflickr.com/300/200/redpanda/all?lock=7", status:"alert", detail:"Increased pacing — possible distress, recommend check"},
+  {animal:"Bimo", species:"Sun Conure", enclosure:"Aviary North", photo:"https://loremflickr.com/300/200/conure,parrot/all?lock=4", status:"alert", detail:"Low activity for 3+ hrs — vet visit may be needed"},
+  {animal:"Kito", species:"Reticulated Giraffe", photo:"https://loremflickr.com/300/200/giraffe,zoo/all?lock=3", enclosure:"Savannah Deck 1", status:"ok", detail:"Normal feeding behaviour"},
+  {animal:"Deshi", species:"Bengal Tiger", enclosure:"Jungle Trail", photo:"https://loremflickr.com/300/200/tiger,zoo/all?lock=8", status:"ok", detail:"Normal activity"},
+];
+
+const CAM_EVENTS = {
+  "Sultan": [
+    {time:"06:40", event:"Woke and stretched near the rock ledge"},
+    {time:"07:15", event:"Ate morning feed, 6kg raw meat"},
+    {time:"08:02", event:"Moved from ledge to shade area"},
+    {time:"09:30", event:"Lying down, resting"},
+    {time:"11:10", event:"Brief pacing near the fence line"},
+  ],
+  "Nadia": [
+    {time:"06:20", event:"Walked from barn to East Yard"},
+    {time:"07:00", event:"Feeding on hay and browse"},
+    {time:"08:45", event:"Dust bathing"},
+    {time:"10:15", event:"Slow walk, slight limp noted on front-left"},
+  ],
+  "Coral": [
+    {time:"07:00", event:"Normal grooming"},
+    {time:"08:30", event:"Started pacing along the same rock path"},
+    {time:"08:45", event:"Pacing continued, flagged by AI as abnormal"},
+    {time:"09:10", event:"Still pacing, alert raised"},
+  ],
+  "Bimo": [
+    {time:"06:50", event:"Perched, minor movement"},
+    {time:"07:40", event:"Last recorded movement"},
+    {time:"08:00", event:"No movement detected since"},
+    {time:"10:40", event:"Still inactive, 3+ hrs, alert raised"},
+  ],
+  "Kito": [
+    {time:"06:30", event:"Feeding on acacia browse"},
+    {time:"08:10", event:"Walked full loop of enclosure"},
+    {time:"09:50", event:"Resting near feeding platform"},
+  ],
+  "Deshi": [
+    {time:"06:15", event:"Morning inspection, alert and active"},
+    {time:"07:30", event:"Drank water, normal amount"},
+    {time:"09:00", event:"Resting in shaded area"},
+  ],
+};
+
+const ALERT_TEMPLATES = [
+  {title:"Motion alert", detail:"Coral (Red Panda) — unusual pacing detected in Highland Enclosure"},
+  {title:"Inactivity alert", detail:"Bimo (Sun Conure) — no movement for 3+ hours, possible health concern"},
+  {title:"Behaviour change", detail:"Nadia (Elephant) — repeated head-shaking detected, may indicate discomfort"},
+  {title:"Feeding anomaly", detail:"Sultan (Lion) — left food untouched for 2nd feeding in a row"},
+];
+let ALERTS = [];
+
+/* ---------------- RENDER SIDEBAR NAV ---------------- */
+function renderNav(){
+  const container = document.getElementById('nav-container');
+  container.innerHTML = NAV[currentRole].map(item => `
+    <div class="nav-item ${item.id===currentTab?'active':''}" style="--active-color:${ROLE_COLOR[currentRole]}" data-tab="${item.id}">
+      <span class="nav-icon">${item.icon}</span>${item.label}
+    </div>`).join('');
+  container.querySelectorAll('.nav-item').forEach(el=>{
+    el.addEventListener('click', ()=>{ currentTab = el.dataset.tab; renderNav(); renderMain(); });
+  });
+}
+
+document.querySelectorAll('.role-row').forEach(row=>{
+  row.addEventListener('click', ()=>{
+    document.querySelectorAll('.role-row').forEach(r=>r.classList.remove('active'));
+    row.classList.add('active');
+    currentRole = row.dataset.role;
+    currentTab = NAV[currentRole][0].id;
+    renderNav(); renderMain();
+  });
+});
+
+/* ---------------- MAIN CONTENT PER ROLE/TAB ---------------- */
+function topbar(title, sub){
+  return `<div class="topbar">
+    <div><div class="page-title">${title}</div><div class="page-sub">${sub}</div></div>
+    <div class="bell-wrap">
+      <span class="role-chip ${ROLE_CHIP[currentRole]}">${currentRole.charAt(0).toUpperCase()+currentRole.slice(1)} view</span>
+      <div class="bell-btn" onclick="toggleBell(event)">
+        🔔<span class="bell-dot ${ALERTS.length?'show':''}" id="bell-dot"></span>
+        <div class="bell-panel" id="bell-panel">
+          ${ALERTS.length ? ALERTS.slice().reverse().map(a=>`
+            <div class="bell-item"><div class="t">${a.title}</div><div class="s">${a.detail} · ${a.time}</div></div>
+          `).join('') : '<div class="bell-item"><div class="s">No alerts yet</div></div>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function badgeClass(value){
+  const s = String(value).toLowerCase();
+  if(s.includes('urgent') || s.includes('overdue')) return 'badge-overdue';
+  if(s.includes('warning') || s.includes('attention') || s.includes('needs')) return 'badge-pending';
+  return 'badge-ok';
+}
+
+function speciesProfileCards(){
+  return `<div class="grid g2">
+    ${SPECIES_PROFILES.map(p=>`
+      <div class="card">
+        <div class="card-head"><span class="card-title">${p.species}</span><span class="badge badge-ok">Profile</span></div>
+        <div class="grid g2">
+          <div class="info-panel"><div class="info-label">Diet</div><div class="info-value">${p.diet}</div></div>
+          <div class="info-panel"><div class="info-label">Normal Activity</div><div class="info-value">${p.active}</div></div>
+          <div class="info-panel"><div class="info-label">Social Baseline</div><div class="info-value">${p.social}</div></div>
+          <div class="info-panel"><div class="info-label">Warning Signs</div><div class="info-value">${p.warning}</div></div>
+        </div>
+        <div class="mini-tags" style="margin-top:11px;">
+          ${p.rules.map(r=>`<span class="mini-tag warn">${r}</span>`).join('')}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function animalBaselineCards(){
+  return `<div class="grid g2">
+    ${ANIMAL_BASELINES.map(a=>`
+      <div class="card profile-card">
+        <img class="profile-photo" src="${a.photo}" alt="">
+        <div>
+          <div class="profile-name">${a.animal}</div>
+          <div class="profile-meta">${a.species}</div>
+          <div class="info-value">${a.normal}</div>
+          <div class="mini-tags" style="margin-top:9px;">
+            <span class="mini-tag ${a.risk==='Urgent'?'risk':a.risk==='Warning'?'warn':'ready'}">${a.risk}</span>
+            <span class="mini-tag ${a.readiness==='Ready for AI'?'ready':'warn'}">${a.readiness}</span>
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function feedingChecklistTable(){
+  return `<div class="card">
+    <div class="card-head"><span class="card-title">Today feeding checklist</span><button class="btn primary" onclick="simulateFeedingSave()">Save checklist</button></div>
+    <table>
+      <tr><th>Animal</th><th>Meal</th><th>Due</th><th>Expected food</th><th>Intake</th><th>Leftover</th><th>Status</th></tr>
+      ${FEEDING_CHECKLISTS.map(f=>`
+        <tr>
+          <td>${f.animal}</td>
+          <td>${f.meal}</td>
+          <td class="mono">${f.due}</td>
+          <td>${f.food}</td>
+          <td>${f.intake}</td>
+          <td>${f.leftover}</td>
+          <td><span class="badge ${badgeClass(f.status)}">${f.status}</span></td>
+        </tr>`).join('')}
+    </table>
+  </div>`;
+}
+
+function feedingEntryForm(){
+  return `<div class="card" style="margin-top:14px;">
+    <div class="card-head"><span class="card-title">New feeding record</span><span class="badge badge-pending">Prototype form</span></div>
+    <div class="checklist-form">
+      <div><div class="field-label">Animal</div><select class="select-input">${MY_ANIMALS.map(a=>`<option>${a.name}</option>`).join('')}<option>Coral</option></select></div>
+      <div><div class="field-label">Meal</div><select class="select-input"><option>Morning</option><option>Midday</option><option>Evening</option><option>Enrichment feed</option></select></div>
+      <div><div class="field-label">Intake</div><select class="select-input"><option>Full</option><option>Partial</option><option>None</option></select></div>
+      <div><div class="field-label">Leftover</div><input class="select-input" value="0%"></div>
+      <div class="wide"><div class="field-label">Food given</div><input class="select-input" value="Expected diet portion"></div>
+      <div class="wide"><div class="field-label">Behavior during feeding</div><textarea class="text-area">Alert, normal posture, no aggression</textarea></div>
+    </div>
+  </div>`;
+}
+
+function aiReviewTable(){
+  return `<div class="card">
+    <div class="card-head"><span class="card-title">Animals needing supervisor attention</span><span class="badge badge-pending">${AI_REVIEWS.length} active alerts</span></div>
+    <table>
+      <tr><th>Animal</th><th>Risk</th><th>Reason</th><th>Last feeding</th><th>Camera event</th><th>Action</th></tr>
+      ${AI_REVIEWS.map(r=>`
+        <tr>
+          <td>${r.animal}</td>
+          <td><span class="badge ${badgeClass(r.level)}">${r.level}</span></td>
+          <td>${r.reason}</td>
+          <td>${r.feeding}</td>
+          <td>${r.camera}</td>
+          <td>${r.action}</td>
+        </tr>`).join('')}
+    </table>
+  </div>`;
+}
+
+function managerEvidenceReviewCard(data = {}){
+  const item = {
+    title:'Holding area cleaning — Giraffe Holding',
+    keeper:'S. Ahmed',
+    date:'Monday, July 13, 2026',
+    time:'10:18',
+    animal:'Zara',
+    enclosure:'Giraffe Holding',
+    zone:'Zone 1',
+    task:'Cleaning',
+    note:'Holding area cleaned before browse delivery. Bedding is dry, gate latch checked, and no leftover debris found.',
+    pdf:'Keeper cleaning report.pdf',
+    photoTitle:'3 uploaded photos',
+    files:'4 files',
+    status:'Waiting review',
+    statusClass:'badge-pending',
+    photos:[
+      'https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=220&q=80',
+      'https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=221&q=80',
+      'https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=222&q=80'
+    ],
+    ...data
+  };
+  return `<div class="card manager-evidence">
+    <div>
+      <div class="card-head">
+        <span class="card-title">Submitted keeper evidence</span>
+        <span class="badge ${item.statusClass}">${item.status}</span>
+      </div>
+      <div class="task-text" style="font-weight:700;">${item.title}</div>
+      <div class="task-meta">Keeper: ${item.keeper} · ${item.date} · ${item.time}</div>
+      <div class="task-detail-grid" style="margin-top:10px;">
+        <div class="task-detail"><b>Zone</b>${item.zone}</div>
+        <div class="task-detail"><b>Enclosure</b>${item.enclosure}</div>
+        <div class="task-detail"><b>Animal</b>${item.animal}</div>
+        <div class="task-detail" style="grid-column:span 3;"><b>Task</b>${item.task}</div>
+      </div>
+      ${item.status === 'Approved'
+        ? ``
+        : `<div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn primary">Approve evidence</button>
+            <button class="btn ghost">Request update</button>
+          </div>`}
+    </div>
+    <div>
+      <div class="card-head">
+        <span class="card-title">Uploaded files</span>
+        <span class="badge badge-ok">${item.files}</span>
+      </div>
+      <div class="manager-preview-grid">
+        <div class="manager-file-preview">
+          <div class="pdf-page-thumb"></div>
+          <div class="manager-file-title">${item.pdf}</div>
+        </div>
+        <div class="manager-file-preview">
+          <div class="photo-stack">
+            ${item.photos.map((src,i)=>`<img src="${src}" alt="${item.animal} evidence photo ${i+1}">`).join('')}
+          </div>
+          <div class="manager-file-title">${item.photoTitle}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+const APP_TODAY = '2026-07-13';
+
+function isReminderDue(reminder){
+  return reminder.date <= APP_TODAY;
+}
+
+function reminderTasksForDate(dateText){
+  return CALENDAR_REMINDERS
+    .filter(r=>r.date===dateText)
+    .map(r=>({
+      reminderId:r.id,
+      id:`R-${r.id}`,
+      date:r.date,
+      time:r.time,
+      text:r.checklist,
+      tag:r.type,
+      animal:r.animal,
+      enclosure:r.enclosure,
+      feed:r.feed,
+      details:r.details,
+      priority:r.priority,
+      done:COMPLETED_REMINDER_IDS.includes(r.id),
+      evidence:false,
+      reminder:true,
+      meta:`Calendar reminder · ${r.date} · ${r.time} · ${r.repeat}`
+    }));
+}
+
+function backendStatusToApproval(status){
+  if(status === 'manager_approved' || status === 'completed') return 'approved';
+  if(status === 'supervisor_approved' || status === 'manager_review') return 'approved';
+  if(status === 'update_requested' || status === 'manager_returned') return 'update-requested';
+  if(status === 'submitted') return 'pending';
+  return undefined;
+}
+
+function mapBackendTaskToPrototype(task){
+  const due = task.dueDate ? new Date(task.dueDate) : new Date();
+  const date = due.toISOString().slice(0,10);
+  const time = due.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const status = task.status || 'assigned';
+  const approval = backendStatusToApproval(status);
+  const doneStatuses = ['submitted','supervisor_approved','manager_review','manager_approved','completed','update_requested','manager_returned'];
+  return {
+    id: task._id,
+    backendId: task._id,
+    date,
+    time,
+    text: task.title || 'Task',
+    tag: task.taskType ? task.taskType.charAt(0).toUpperCase() + task.taskType.slice(1) : 'Task',
+    animal: task.animal?.name || 'General task',
+    enclosure: task.enclosure?.name || 'Unassigned',
+    feed: task.feedItem || 'Not applicable',
+    details: task.description || 'No extra instructions',
+    priority: task.priority || 'normal',
+    done: doneStatuses.includes(status),
+    evidence: ['submitted','supervisor_approved','manager_review','manager_approved','completed','update_requested','manager_returned'].includes(status),
+    approval,
+    note: task.keeperNote || '',
+    supervisorComment: task.supervisorComment || '',
+    managerComment: task.managerComment || '',
+    backendStatus: status,
+    meta: `Backend task - ${status.replaceAll('_',' ')}`
+  };
+}
+
+async function apiRequest(apiPath, options = {}){
+  const headers = options.headers || {};
+  if(authToken) headers.Authorization = `Bearer ${authToken}`;
+  const response = await fetch(`${API_BASE_URL}${apiPath}`, {...options, headers});
+  const data = await response.json().catch(()=>({}));
+  if(!response.ok){
+    throw new Error(data.message || `Request failed: ${response.status}`);
+  }
+  return data;
+}
+
+async function loginUser(email, password){
+  const data = await apiRequest('/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password})
+  });
+  authToken = data.token;
+  currentUser = data.user;
+  localStorage.setItem('zooopsToken', authToken);
+  localStorage.setItem('zooopsUser', JSON.stringify(currentUser));
+  return data.user;
+}
+
+function roleFromBackendUser(user){
+  const roleName = String(user?.role?.name || '').toLowerCase();
+  if(roleName === 'management') return 'management';
+  if(roleName === 'supervisor') return 'supervisor';
+  if(roleName === 'admin') return 'admin';
+  return 'keeper';
+}
+
+async function loadTasksFromBackend(){
+  const data = await apiRequest('/tasks');
+  const backendTasks = (data.tasks || []).map(mapBackendTaskToPrototype);
+  KEEPER_TASKS.splice(0, KEEPER_TASKS.length, ...backendTasks);
+  if(backendTasks.length && !backendTasks.some(t=>t.date===selectedTaskDate)){
+    selectedTaskDate = backendTasks[0].date;
+  }
+  backendTasksLoaded = true;
+  return backendTasks;
+}
+
+async function submitBackendEvidence(task){
+  if(!task?.backendId) return false;
+  const payload = {
+    task: task.backendId,
+    note: task.note || 'Evidence submitted from ZooOps frontend.',
+    submitNow: true,
+    files: []
+  };
+  await apiRequest('/evidence', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  return true;
+}
+
+function tasksForDate(dateText){
+  return [
+    ...reminderTasksForDate(dateText),
+    ...KEEPER_TASKS.filter(t=>t.date===dateText)
+  ].sort((a,b)=>(a.time || '').localeCompare(b.time || ''));
+}
+
+function formatTaskDate(dateText){
+  return new Date(dateText + 'T00:00:00').toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+
+function parseLocalDate(dateText){
+  const [year, month, day] = dateText.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateKey(date){
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function shiftTaskDay(days){
+  const d = parseLocalDate(selectedTaskDate);
+  d.setDate(d.getDate() + days);
+  selectedTaskDate = formatDateKey(d);
+  selectedEnclosureFilter = null;
+  selectedZoneFilter = null;
+  renderMain();
+}
+
+function taskCompletionNote(task){
+  return task.reminder ? (REMINDER_NOTES[task.id] || '') : (task.note || '');
+}
+
+function taskApprovalState(task){
+  if(task.approval === 'approved') return {label:'Approved', cls:'badge-ok'};
+  if(task.approval === 'update-requested') return {label:'Update requested', cls:'badge-overdue'};
+  if(task.done || task.evidence) return {label:'Pending review', cls:'badge-pending'};
+  return {label:'Pending', cls:'badge-pending'};
+}
+
+function taskIsApproved(task){
+  return task.done && task.evidence && task.approval === 'approved';
+}
+
+function evidencePhotoForTask(task, index){
+  const key = String(task.animal || task.enclosure || '').toLowerCase();
+  const photos = [
+    ['zara', 'https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=220&q=80'],
+    ['kito', 'https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=220&q=80'],
+    ['giraffe', 'https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=220&q=80'],
+    ['sultan', 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=220&q=80'],
+    ['lion', 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=220&q=80'],
+    ['bimo', 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=220&q=80'],
+    ['aviary', 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=220&q=80'],
+    ['rafiki', 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=220&q=80'],
+    ['primate', 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=220&q=80'],
+    ['nadia', 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=220&q=80'],
+    ['elephant', 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=220&q=80'],
+    ['coral', 'https://images.unsplash.com/photo-1626170733249-04ebfe61fe1b?w=220&q=80']
+  ];
+  const found = photos.find(([name])=>key.includes(name));
+  return found ? found[1] : `https://loremflickr.com/220/140/zoo,animal/all?lock=${index + 80}`;
+}
+
+function taskEvidenceComposer(task, index){
+  const note = taskCompletionNote(task);
+  const hasEvidence = task.evidence || task.done;
+  const photoUrl = evidencePhotoForTask(task, index);
+  const pdfName = hasEvidence ? 'Keeper report' : 'Pending evidence';
+  const pdfMeta = hasEvidence ? 'PDF · 1 page' : 'PDF · ready';
+  const photoTitle = hasEvidence ? 'Uploaded animal photo' : 'Selected animal photo';
+  const moreCount = hasEvidence ? '+2' : '+1';
+  const previews = `
+    <div class="evidence-preview-row">
+      <div class="evidence-card pdf">
+        <div class="evidence-icon">PDF</div>
+        <div style="min-width:0;">
+          <div class="evidence-name">${pdfName}</div>
+          <div class="evidence-meta">${pdfMeta}</div>
+        </div>
+      </div>
+      <div class="evidence-card photo" title="${photoTitle}"><img src="${photoUrl}" alt="${task.animal || 'Animal'} evidence photo"></div>
+      <div class="evidence-more">${moreCount}</div>
+    </div>
+  `;
+  return `
+    <div class="evidence-composer">
+      ${previews}
+      ${task.supervisorComment ? `<div class="manager-note" style="background:var(--red-dim);border-left-color:var(--red);font-size:11.5px;"><b>Supervisor comment:</b> ${task.supervisorComment}</div>` : ``}
+      <textarea class="evidence-input" placeholder="Add completion description or evidence note" oninput="updateTaskNote('${task.id}', this.value)">${note}</textarea>
+      <div class="evidence-bottom">
+        <div class="evidence-tools">
+          <button class="evidence-tool" title="Attach file">📎</button>
+          <button class="evidence-tool" title="Upload photo">▧</button>
+          <button class="evidence-tool" title="Upload video">▶</button>
+        </div>
+        <button class="evidence-send" title="Submit evidence" onclick="submitTaskEvidence('${task.id}')">↑</button>
+      </div>
+    </div>
+  `;
+}
+
+function enclosureSummaryItems(tasks){
+  const map = new Map();
+  tasks.forEach(t=>{
+    const enclosure = t.enclosure || 'Unassigned';
+    if(!map.has(enclosure)) map.set(enclosure, {animals:new Set(), tasks:[]});
+    map.get(enclosure).animals.add(t.animal || 'General task');
+    map.get(enclosure).tasks.push(t);
+  });
+  return Array.from(map.entries()).map(([enclosure, data])=>({
+    enclosure,
+    zone: zoneForEnclosure(enclosure),
+    animals:Array.from(data.animals),
+    taskCount:data.tasks.length,
+    complete:data.tasks.length > 0 && data.tasks.every(t=>taskIsApproved(t)),
+    urgent:data.tasks.some(t=>['medical','injection'].includes(String(t.tag).toLowerCase()) || String(t.priority).toLowerCase()==='urgent')
+  }));
+}
+
+function zoneForEnclosure(enclosure){
+  const zones = {
+    'Savannah Deck 1':'Zone 1',
+    'Savannah Deck 2':'Zone 1',
+    'Savannah Yard 3':'Zone 1',
+    'Giraffe Holding':'Zone 1',
+    'Reptile House A':'Zone 2',
+    'Tortoise Yard':'Zone 2',
+    'Primate House':'Zone 3',
+    'Meerkat Habitat':'Zone 3',
+    'Aviary North':'Zone 4',
+    'Aviary South':'Zone 4',
+    'Penguin Pool':'Zone 4',
+    'Highland Enclosure':'Zone 4',
+    'Nocturnal House':'Zone 5',
+    'Elephant Yard':'Zone 5',
+    'Elephant Barn':'Zone 5',
+    'East Yard fencing':'Zone 5'
+  };
+  return zones[enclosure] || 'Unassigned Zone';
+}
+
+function zoneSummaryItems(enclosures){
+  const map = new Map();
+  ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5'].forEach(zone=>{
+    map.set(zone, {enclosures:[], taskCount:0, complete:false, urgent:false});
+  });
+  enclosures.forEach(item=>{
+    const zone = item.zone || 'Unassigned Zone';
+    if(!map.has(zone)) map.set(zone, {enclosures:[], taskCount:0, complete:true, urgent:false});
+    const data = map.get(zone);
+    data.enclosures.push(item);
+    data.taskCount += item.taskCount;
+    data.complete = data.complete && item.complete;
+    data.urgent = data.urgent || item.urgent;
+  });
+  return Array.from(map.entries()).map(([zone, data])=>({
+    zone,
+    enclosureCount:data.enclosures.length,
+    taskCount:data.taskCount,
+    complete:data.enclosures.length > 0 && data.complete,
+    urgent:data.urgent
+  }));
+}
+
+function toggleEnclosureSummary(){
+  const el = document.getElementById('enclosure-summary');
+  if(el) el.classList.toggle('show');
+}
+
+function toggleZoneSummary(){
+  const el = document.getElementById('zone-summary');
+  if(el) el.classList.toggle('show');
+}
+
+function setEnclosureFilter(enclosure){
+  selectedEnclosureFilter = enclosure || null;
+  renderMain();
+}
+
+function openZoneEnclosures(zone){
+  selectedZoneFilter = zone || null;
+  selectedEnclosureFilter = null;
+  renderMain();
+  setTimeout(()=>{
+    const el = document.getElementById('enclosure-summary');
+    if(el) el.classList.add('show');
+  }, 0);
+}
+
+function openEnclosureTasks(enclosure){
+  selectedEnclosureFilter = enclosure || null;
+  selectedZoneFilter = zoneForEnclosure(enclosure);
+  renderMain();
+}
+
+function backToEnclosureList(){
+  selectedEnclosureFilter = null;
+  renderMain();
+  setTimeout(()=>{
+    const el = document.getElementById('enclosure-summary');
+    if(el) el.classList.add('show');
+  }, 0);
+}
+
+function backToZoneList(){
+  selectedZoneFilter = null;
+  selectedEnclosureFilter = null;
+  renderMain();
+  setTimeout(()=>{
+    const el = document.getElementById('zone-summary');
+    if(el) el.classList.add('show');
+  }, 0);
+}
+
+function reviewSubmissionsForDate(dateText){
+  return KEEPER_TASKS
+    .filter(t=>t.date===dateText && t.evidence)
+    .map((t,i)=>({
+      ...t,
+      zone:zoneForEnclosure(t.enclosure),
+      keeper:'S. Ahmed',
+      submitted:t.time || '09:00',
+      status:t.approval === 'approved' ? 'Approved' : 'Waiting review',
+      statusClass:t.approval === 'approved' ? 'badge-ok' : 'badge-pending',
+      fileCount:t.approval === 'approved' ? '4 files' : '3 files',
+      photoTitle:t.approval === 'approved' ? '3 uploaded photos' : '2 uploaded photos',
+      photoSeed:i
+    }));
+}
+
+function reviewZoneItems(submissions){
+  const map = new Map();
+  ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5'].forEach(zone=>{
+    map.set(zone, {items:[], approved:0, pending:0});
+  });
+  submissions.forEach(item=>{
+    if(!map.has(item.zone)) map.set(item.zone, {items:[], approved:0, pending:0});
+    const data = map.get(item.zone);
+    data.items.push(item);
+    if(item.approval === 'approved') data.approved += 1;
+    else data.pending += 1;
+  });
+  return Array.from(map.entries()).map(([zone,data])=>({
+    zone,
+    count:data.items.length,
+    approved:data.approved,
+    pending:data.pending,
+    complete:data.items.length > 0 && data.pending === 0,
+    urgent:data.pending > 0
+  }));
+}
+
+function reviewEnclosureItems(submissions){
+  const map = new Map();
+  submissions.forEach(item=>{
+    if(!map.has(item.enclosure)) map.set(item.enclosure, {items:[], animals:new Set(), approved:0, pending:0});
+    const data = map.get(item.enclosure);
+    data.items.push(item);
+    data.animals.add(item.animal);
+    if(item.approval === 'approved') data.approved += 1;
+    else data.pending += 1;
+  });
+  return Array.from(map.entries()).map(([enclosure,data])=>({
+    enclosure,
+    animals:Array.from(data.animals),
+    count:data.items.length,
+    approved:data.approved,
+    pending:data.pending,
+    complete:data.items.length > 0 && data.pending === 0,
+    urgent:data.pending > 0
+  }));
+}
+
+function shiftReviewDay(days){
+  const d = parseLocalDate(selectedReviewDate);
+  d.setDate(d.getDate() + days);
+  selectedReviewDate = formatDateKey(d);
+  selectedReviewZone = null;
+  selectedReviewEnclosure = null;
+  renderMain();
+}
+
+function openReviewZone(zone){
+  selectedReviewZone = zone || null;
+  selectedReviewEnclosure = null;
+  renderMain();
+}
+
+function openReviewEnclosure(enclosure){
+  selectedReviewEnclosure = enclosure || null;
+  renderMain();
+}
+
+function backToReviewZones(){
+  selectedReviewZone = null;
+  selectedReviewEnclosure = null;
+  renderMain();
+}
+
+function backToReviewEnclosures(){
+  selectedReviewEnclosure = null;
+  renderMain();
+}
+
+function reviewCardFromSubmission(item){
+  const photoUrl = evidencePhotoForTask(item, item.photoSeed || 0);
+  return managerEvidenceReviewCard({
+    title:`${item.text} — ${item.enclosure}`,
+    keeper:item.keeper,
+    date:formatTaskDate(item.date),
+    time:item.submitted,
+    animal:item.animal,
+    enclosure:item.enclosure,
+    zone:item.zone,
+    task:item.tag,
+    note:item.note || 'Evidence submitted by keeper.',
+    pdf:`${item.tag} evidence report.pdf`,
+    photoTitle:item.photoTitle,
+    files:item.fileCount,
+    status:item.status,
+    statusClass:item.statusClass,
+    photos:[photoUrl, photoUrl, photoUrl]
+  });
+}
+
+function reminderMonthLabel(dateText){
+  return new Date(dateText + 'T00:00:00').toLocaleDateString('en-US',{month:'short'});
+}
+
+function calendarGrid(){
+  const year = 2026;
+  const monthIndex = 6;
+  const first = new Date(year, monthIndex, 1);
+  const startDay = first.getDay();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const cells = [];
+  for(let i=0;i<startDay;i++) cells.push({day:'', muted:true, date:''});
+  for(let d=1; d<=daysInMonth; d++){
+    const date = `${year}-07-${String(d).padStart(2,'0')}`;
+    cells.push({day:d, muted:false, date});
+  }
+  while(cells.length % 7 !== 0) cells.push({day:'', muted:true, date:''});
+  const names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(n=>`<div class="calendar-day-name">${n}</div>`).join('');
+  return `<div class="card">
+    <div class="card-head"><span class="card-title">July 2026</span><button class="btn primary" onclick="showReminderToast()">Add reminder</button></div>
+    <div class="calendar-grid">${names}
+      ${cells.map(c=>{
+        const reminders = c.date ? CALENDAR_REMINDERS.filter(r=>r.date===c.date) : [];
+        return `<div class="calendar-cell ${c.muted?'muted':''} ${c.date===APP_TODAY?'today':''}">
+          <div class="calendar-date">${c.day || ''}</div>
+          ${reminders.map(r=>`<div class="calendar-pill ${r.priority==='Urgent'?'urgent':r.type==='Medical'?'medical':''}" title="${r.title}">${r.animal}: ${r.title}</div>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function reminderList(){
+  return `<div class="card">
+    <div class="card-head"><span class="card-title">Scheduled animal reminders</span><span class="badge badge-pending">${CALENDAR_REMINDERS.length} reminders</span></div>
+    ${CALENDAR_REMINDERS.map(r=>`
+      <div class="reminder-row">
+        <div class="reminder-date"><div class="d">${Number(r.date.slice(-2))}</div><div class="m">${reminderMonthLabel(r.date)}</div></div>
+        <div class="task-main">
+          <div class="reminder-title">${r.title} — ${r.animal}</div>
+          <div class="reminder-meta">${r.type} · ${r.time} · ${r.repeat}<br>My Tasks item: ${r.checklist}</div>
+          <div class="mini-tags" style="margin-top:7px;">
+            <span class="mini-tag ${r.priority==='Urgent'?'risk':r.priority==='Warning'?'warn':'ready'}">${r.priority}</span>
+            <span class="mini-tag ${isReminderDue(r)?'warn':'ready'}">${isReminderDue(r)?'Added to My Tasks':'Upcoming'}</span>
+          </div>
+        </div>
+        <span class="badge badge-ok">Sent to My Tasks</span>
+      </div>`).join('')}
+  </div>`;
+}
+
+function reminderForm(){
+  return `<div class="card" style="margin-top:14px;">
+    <div class="card-head"><span class="card-title">Assign calendar task to keeper</span><span class="badge badge-pending">Management/Admin form</span></div>
+    <div class="checklist-form">
+      <div><div class="field-label">Animal</div><select class="select-input">${MY_ANIMALS.map(a=>`<option>${a.name}</option>`).join('')}<option>Coral</option></select></div>
+      <div><div class="field-label">Type</div><select class="select-input"><option>Medical</option><option>Injection</option><option>Observation</option><option>Feeding</option></select></div>
+      <div><div class="field-label">Date</div><input class="select-input" value="2026-07-15"></div>
+      <div><div class="field-label">Repeat</div><select class="select-input"><option>One time</option><option>Every week</option><option>Every 2 weeks</option><option>Every month</option></select></div>
+      <div class="wide"><div class="field-label">Reminder title</div><input class="select-input" value="Injection reminder"></div>
+      <div class="wide"><div class="field-label">Keeper task created in My Tasks</div><input class="select-input" value="Injection confirmation — Sultan (Lion)"></div>
+      <div><div class="field-label">Enclosure</div><input class="select-input" value="Savannah Deck 2"></div>
+      <div><div class="field-label">Feed / item</div><input class="select-input" value="Not applicable"></div>
+    </div>
+  </div>`;
+}
+
+function calendarPageView(){
+  const due = CALENDAR_REMINDERS.filter(isReminderDue).length;
+  const upcoming = CALENDAR_REMINDERS.length - due;
+  return topbar('Calendar Task Assignment', 'Management/Admin schedules tasks that appear in keeper My Tasks') + `
+    <div class="risk-strip" style="margin-bottom:14px;">
+      <div class="risk-item"><div class="risk-score">${CALENDAR_REMINDERS.length}</div><div class="stat-label">Scheduled tasks</div></div>
+      <div class="risk-item"><div class="risk-score" style="color:var(--amber);">${due}</div><div class="stat-label">Visible in My Tasks</div></div>
+      <div class="risk-item"><div class="risk-score" style="color:var(--blue);">${upcoming}</div><div class="stat-label">Upcoming</div></div>
+    </div>
+    <div class="calendar-layout">
+      ${calendarGrid()}
+      ${reminderList()}
+    </div>
+    ${reminderForm()}`;
+}
+
+function getAnimalProfile(name){
+  const animal = MY_ANIMALS.find(a=>a.name===name) || CAMERAS.find(c=>c.animal===name);
+  const baseline = ANIMAL_BASELINES.find(b=>b.animal===name);
+  const feeding = FEEDING_CHECKLISTS.find(f=>f.animal===name);
+  const camera = CAMERAS.find(c=>c.animal===name);
+  const species = SPECIES_PROFILES.find(p=>p.species===(animal?.species || baseline?.species || camera?.species));
+  const ai = AI_REVIEWS.find(r=>r.animal===name);
+  return {animal, baseline, feeding, camera, species, ai};
+}
+
+function animalProfileView(name){
+  const {animal, baseline, feeding, camera, species, ai} = getAnimalProfile(name);
+  const display = animal || baseline || camera || {name, animal:name, species:"Unknown species", enclosure:"Unassigned", photo:"https://loremflickr.com/300/200/zoo,animal/all?lock=88"};
+  const animalName = display.name || display.animal;
+  const risk = ai?.level || baseline?.risk || "Normal";
+  const lastCamera = ai?.camera || camera?.detail || "No camera event logged";
+  const lastFeeding = ai?.feeding || (feeding ? `${feeding.intake} intake, ${feeding.leftover} leftover` : "No feeding record today");
+  return topbar(animalName, `${display.species || baseline?.species || camera?.species} · ${display.enclosure || camera?.enclosure || "No enclosure"}`) + `
+    <button class="btn ghost" style="margin-bottom:14px;" onclick="backToAnimals()">Back to animals</button>
+    <div class="card profile-hero" style="margin-bottom:14px;">
+      <img src="${display.photo || baseline?.photo || camera?.photo}" alt="">
+      <div>
+        <div class="card-head"><span class="card-title">Animal Profile</span><span class="badge ${badgeClass(risk)}">${risk}</span></div>
+        <div class="profile-facts">
+          <div class="profile-fact"><div class="k">Animal ID</div><div class="v">${animalName.toUpperCase()}-001</div></div>
+          <div class="profile-fact"><div class="k">Species</div><div class="v">${display.species || baseline?.species || camera?.species}</div></div>
+          <div class="profile-fact"><div class="k">Enclosure</div><div class="v">${display.enclosure || camera?.enclosure || "Unassigned"}</div></div>
+          <div class="profile-fact"><div class="k">AI Status</div><div class="v">${baseline?.readiness || "Needs baseline"}</div></div>
+        </div>
+        <div class="info-panel" style="margin-top:12px;">
+          <div class="info-label">Today status</div>
+          <div class="info-value">${ai?.reason || camera?.detail || "No abnormal behavior found today."}</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-bottom:14px;">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Feeding Today</span><span class="badge ${badgeClass(feeding?.status || 'Normal')}">${feeding?.status || 'No issue'}</span></div>
+        <div class="profile-facts">
+          <div class="profile-fact"><div class="k">Meal</div><div class="v">${feeding?.meal || "Not scheduled"}</div></div>
+          <div class="profile-fact"><div class="k">Food</div><div class="v">${feeding?.food || "No record"}</div></div>
+          <div class="profile-fact"><div class="k">Intake</div><div class="v">${feeding?.intake || "No record"}</div></div>
+          <div class="profile-fact"><div class="k">Leftover</div><div class="v">${feeding?.leftover || "No record"}</div></div>
+        </div>
+        <div class="info-panel" style="margin-top:12px;"><div class="info-label">Keeper note</div><div class="info-value">${feeding?.behavior || "No feeding note yet."}</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Latest Monitoring</span></div>
+        <div class="timeline">
+          <div class="timeline-row"><span class="timeline-time">Feed</span><span class="timeline-dot"></span><div class="timeline-copy">${lastFeeding}</div></div>
+          <div class="timeline-row"><span class="timeline-time">Cam</span><span class="timeline-dot"></span><div class="timeline-copy">${lastCamera}</div></div>
+          <div class="timeline-row"><span class="timeline-time">AI</span><span class="timeline-dot"></span><div class="timeline-copy">${ai?.action || "Continue normal observation."}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Individual Behavior Baseline</span></div>
+        <div class="info-value">${baseline?.normal || "This animal still needs an individual behavior baseline from keepers/vets."}</div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Species Behavior Rules</span></div>
+        <div class="grid g2">
+          <div class="info-panel"><div class="info-label">Diet</div><div class="info-value">${species?.diet || "Not configured"}</div></div>
+          <div class="info-panel"><div class="info-label">Normal Activity</div><div class="info-value">${species?.active || "Not configured"}</div></div>
+          <div class="info-panel"><div class="info-label">Social</div><div class="info-value">${species?.social || "Not configured"}</div></div>
+          <div class="info-panel"><div class="info-label">Warning Signs</div><div class="info-value">${species?.warning || "Not configured"}</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderMain(){
+  const main = document.getElementById('main');
+  if(currentRole==='keeper') main.innerHTML = keeperView();
+  else if(currentRole==='supervisor') main.innerHTML = supervisorView();
+  else if(currentRole==='management') main.innerHTML = managementView();
+  else main.innerHTML = adminView();
+
+  if(currentRole==='keeper' && currentTab==='my-tasks') bindTaskEvents();
+  if(currentRole==='management' && currentTab==='dashboard') setTimeout(drawCharts, 0);
+}
+
+function openAnimalProfile(name){
+  selectedAnimalName = name;
+  currentTab = 'animal-profile';
+  renderNav();
+  renderMain();
+}
+
+function backToAnimals(){
+  selectedAnimalName = null;
+  currentTab = 'my-animals';
+  renderNav();
+  renderMain();
+}
+
+/* ---------- KEEPER ---------- */
+function keeperView(){
+  if(currentTab==='animal-profile'){
+    return animalProfileView(selectedAnimalName || 'Sultan');
+  }
+  if(currentTab==='my-tasks'){
+    const dayTasks = tasksForDate(selectedTaskDate);
+    const enclosureItems = enclosureSummaryItems(dayTasks);
+    const enclosureCount = enclosureItems.length;
+    const zoneItems = zoneSummaryItems(enclosureItems);
+    const zoneCount = zoneItems.length;
+    if(selectedZoneFilter && !zoneItems.some(item=>item.zone===selectedZoneFilter)){
+      selectedZoneFilter = null;
+    }
+    if(selectedEnclosureFilter && !enclosureItems.some(item=>item.enclosure===selectedEnclosureFilter)){
+      selectedEnclosureFilter = null;
+    }
+    const zoneEnclosures = selectedZoneFilter ? enclosureItems.filter(item=>item.zone===selectedZoneFilter) : enclosureItems;
+    const tasks = selectedEnclosureFilter ? dayTasks.filter(t=>t.enclosure===selectedEnclosureFilter) : [];
+    const dayDone = dayTasks.filter(t=>t.done).length;
+    const selectedDone = tasks.filter(t=>t.done).length;
+    const selectedApproved = tasks.filter(t=>taskIsApproved(t)).length;
+    return topbar('My Tasks', `${dayDone}/${dayTasks.length} complete today`) + `
+      <div class="card day-switcher">
+        <button class="arrow-btn" onclick="shiftTaskDay(-1)">‹ Previous</button>
+        <div>
+          <div class="day-title">${formatTaskDate(selectedTaskDate)}</div>
+          <div class="day-sub">Choose the date first, then select one enclosure to view its assigned tasks.</div>
+        </div>
+        <button class="arrow-btn" onclick="shiftTaskDay(1)">Next ›</button>
+      </div>
+      ${selectedEnclosureFilter ? `<div class="card">
+        <div class="task-detail-head">
+          <div>
+            <button class="btn ghost" onclick="backToEnclosureList()">‹ Back to ${selectedZoneFilter || 'zone'} enclosures</button>
+            <div class="task-detail-title">${selectedEnclosureFilter} Tasks</div>
+            <div class="task-detail-sub">${formatTaskDate(selectedTaskDate)} · ${tasks.map(t=>t.animal || 'General task').filter((v,i,a)=>a.indexOf(v)===i).join(', ')}</div>
+          </div>
+          <span class="badge ${selectedApproved===tasks.length && tasks.length ? 'badge-ok' : 'badge-pending'}">${selectedApproved}/${tasks.length} approved</span>
+        </div>
+        ${tasks.length ? tasks.map((t,i)=>`
+          <div class="task-row">
+            <div class="task-check ${t.done?'done':''}" onclick="${t.reminder ? `toggleReminderTask(${t.reminderId})` : `toggleKeeperTask('${t.id}')`}">${t.done?'✓':''}</div>
+            <div class="task-main">
+              <div class="task-text ${t.done?'done':''}">${t.text}</div>
+              <div class="task-meta">${t.meta || (t.done ? (t.evidence?'Evidence attached · logged today':'Marked complete') : 'Pending')}</div>
+              <div class="task-detail-grid">
+                <div class="task-detail"><b>Time</b>${t.time || 'Not set'}</div>
+                <div class="task-detail"><b>Enclosure</b>${t.enclosure || 'Not assigned'}</div>
+                <div class="task-detail"><b>Animal</b>${t.animal || 'General task'}</div>
+                <div class="task-detail"><b>Feed / item</b>${t.feed || 'Not applicable'}</div>
+                <div class="task-detail" style="grid-column:span 2;"><b>Instructions</b>${t.details || 'No extra instructions'}</div>
+              </div>
+            </div>
+            <div class="task-actions">
+              <span class="task-tag">${t.tag}</span>
+              <span class="badge ${taskApprovalState(t).cls}">${taskApprovalState(t).label}</span>
+              ${taskEvidenceComposer(t,i)}
+            </div>
+          </div>`).join('') : `<div style="font-size:12.5px;color:var(--dim);padding:10px 0;">No keeper tasks assigned for this day.</div>`}
+      </div>` : `
+      ${selectedZoneFilter ? `<div class="card" id="enclosure-summary">
+        <div class="card-head">
+          <span class="card-title">${selectedZoneFilter} enclosures for ${formatTaskDate(selectedTaskDate)}</span>
+          <span class="clear-filter" onclick="backToZoneList()">Back to zones</span>
+        </div>
+        <div class="enclosure-summary-grid">
+          ${zoneEnclosures.length ? zoneEnclosures.map((item,index)=>`
+            <div class="enclosure-summary-item ${item.complete?'complete':''}" onclick="openEnclosureTasks('${item.enclosure.replace(/'/g, "\\'")}')">
+              <div class="enclosure-summary-main">
+                <div class="enclosure-index">${index + 1}</div>
+                <div>
+                  <b>${item.enclosure}</b>
+                  <span>${item.animals.join(', ')}</span>
+                </div>
+              </div>
+              <div class="enclosure-status-row">
+                ${item.urgent ? `<span class="urgent-mark" title="Urgent">!</span>` : ``}
+                ${item.complete ? `<span class="badge badge-ok">All done</span>` : `<span class="badge badge-pending">${item.taskCount} task${item.taskCount===1?'':'s'}</span>`}
+              </div>
+            </div>
+          `).join('') : `<div style="font-size:12.5px;color:var(--dim);">No enclosures assigned for this day.</div>`}
+        </div>
+      </div>` : `<div class="card" id="zone-summary">
+        <div class="card-head">
+          <span class="card-title">Zones for ${formatTaskDate(selectedTaskDate)}</span>
+        </div>
+        <div class="enclosure-summary-grid">
+          ${zoneItems.length ? zoneItems.map((item,index)=>`
+            <div class="enclosure-summary-item ${item.complete?'complete':''}" onclick="openZoneEnclosures('${item.zone.replace(/'/g, "\\'")}')">
+              <div class="enclosure-summary-main">
+                <div class="enclosure-index">${index + 1}</div>
+                <div>
+                  <b>${item.zone}</b>
+                  <span>${item.enclosureCount ? `${item.enclosureCount} enclosure${item.enclosureCount===1?'':'s'} · ${item.taskCount} task${item.taskCount===1?'':'s'}` : 'No assigned enclosure for this date'}</span>
+                </div>
+              </div>
+              <div class="enclosure-status-row">
+                ${item.urgent ? `<span class="urgent-mark" title="Urgent">!</span>` : ``}
+                ${item.complete ? `<span class="badge badge-ok">All done</span>` : `<span class="badge badge-pending">${item.enclosureCount ? `${item.enclosureCount} enclosure${item.enclosureCount===1?'':'s'}` : 'Empty'}</span>`}
+              </div>
+            </div>
+          `).join('') : `<div style="font-size:12.5px;color:var(--dim);">No zones assigned for this day.</div>`}
+        </div>
+      </div>`}`}`;
+  }
+  if(currentTab==='my-animals'){
+    return topbar('My Animals', 'Assigned to Enclosure 4') + `
+      <div class="grid g3">
+        ${MY_ANIMALS.map(a=>`
+          <div class="card animal-card" onclick="openAnimalProfile('${a.name}')" style="padding:0; overflow:hidden;">
+            <img src="${a.photo}" style="width:100%;height:110px;object-fit:cover;display:block;">
+            <div style="padding:12px 14px;">
+              <div style="font-weight:600;font-size:14px;">${a.name}</div>
+              <div style="font-size:11.5px;color:var(--dim);font-style:italic;margin-bottom:4px;">${a.species}</div>
+              <div style="font-size:11px;color:var(--dim-2);" class="mono">${a.enclosure}</div>
+              <button class="btn ghost" style="margin-top:10px;padding:6px 10px;" onclick="event.stopPropagation(); openAnimalProfile('${a.name}')">View profile</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+  if(currentTab==='feeding-checklist'){
+    return topbar('Feeding Checklist', 'Record food, intake, leftovers, and behavior') + `
+      <div class="risk-strip" style="margin-bottom:14px;">
+        <div class="risk-item"><div class="risk-score">4</div><div class="stat-label">Meals due today</div></div>
+        <div class="risk-item"><div class="risk-score" style="color:var(--amber);">2</div><div class="stat-label">Need attention</div></div>
+        <div class="risk-item"><div class="risk-score" style="color:var(--red);">1</div><div class="stat-label">Urgent appetite issue</div></div>
+      </div>
+      ${feedingChecklistTable()}
+      ${feedingEntryForm()}`;
+  }
+  if(currentTab==='monitoring'){
+    return topbar('Live Monitoring', 'AI-assisted behaviour tracking · Enclosure 4') + monitoringGrid() + `
+      <div class="card" style="margin-top:14px; font-size:12px; color:var(--dim); line-height:1.6;">
+        <b style="color:var(--text);">How this works:</b> enclosure cameras stream continuously to an on-site AI model that watches for movement patterns, inactivity, and behaviour changes. When something looks abnormal — pacing, no movement, altered feeding — it flags the animal here and sends you a real-time alert (see the bell icon above, or the pop-up notifications). No footage is stored beyond a rolling clip used to confirm the alert.
+      </div>`;
+  }
+  if(currentTab==='evidence'){
+    const withEvidence = KEEPER_TASKS.filter(t=>t.evidence);
+    return topbar('Evidence Log', 'Photos submitted with date, time & keeper ID') + `
+      <div class="grid g3">
+        ${withEvidence.map((t,i)=>`
+          <div class="card" style="padding:0;overflow:hidden;">
+            <img src="https://loremflickr.com/300/180/zoo,keeper/all?lock=${i+20}" style="width:100%;height:130px;object-fit:cover;display:block;">
+            <div style="padding:10px 12px;">
+              <div style="font-size:12.5px;font-weight:600;">${t.text}</div>
+              <div class="mono" style="font-size:10px;color:var(--dim-2);margin-top:4px;">07 Jul 2026 · 08:1${i}  · S. Ahmed</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+  if(currentTab==='notes'){
+    return topbar('Notes', 'Observations logged by you') + `
+      <div class="card">
+        <div style="border-left:3px solid var(--green); background:var(--green-dim); padding:10px 12px; border-radius:6px; font-size:13px; margin-bottom:10px;">
+          Sultan was alert and ate full portion this morning. No concerns.
+          <div class="mono" style="font-size:10.5px;color:var(--dim-2);margin-top:5px;">07 Jul · 08:05</div>
+        </div>
+        <div style="border-left:3px solid var(--amber); background:var(--amber-dim); padding:10px 12px; border-radius:6px; font-size:13px;">
+          Coral (Red Panda) showing slightly reduced appetite for second day — flagged for supervisor review.
+          <div class="mono" style="font-size:10.5px;color:var(--dim-2);margin-top:5px;">07 Jul · 09:20</div>
+        </div>
+      </div>`;
+  }
+}
+
+function monitoringGrid(){
+  return `<div class="grid g3">
+    ${CAMERAS.map((c,i)=>`
+      <div class="cam-card ${c.status==='alert'?'alert':''}">
+        <div class="cam-img-wrap">
+          <img src="${c.photo}">
+          <div class="cam-ring"></div>
+          <div class="cam-live-tag"><span class="cam-live-dot"></span>LIVE</div>
+          <button class="cam-ai-btn" onclick="openCamAI(${i})" title="Ask AI about this camera">✨</button>
+        </div>
+        <div class="cam-body">
+          <div class="cam-name">${c.animal}</div>
+          <div class="cam-enc">${c.species} · ${c.enclosure}</div>
+          <span class="cam-status ${c.status==='alert'?'alert':'ok'}">${c.status==='alert' ? '⚠ '+c.detail : '✓ '+c.detail}</span>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+let currentCamIndex = null;
+
+function openCamAI(i){
+  currentCamIndex = i;
+  const c = CAMERAS[i];
+  document.getElementById('cam-ai-photo').src = c.photo;
+  document.getElementById('cam-ai-title').textContent = 'Ask AI — ' + c.animal;
+  document.getElementById('cam-ai-sub').textContent = c.species + ' · ' + c.enclosure;
+  const body = document.getElementById('cam-ai-body');
+  body.innerHTML = '';
+  addCamMsg('bot', `Hi, ask me anything about ${c.animal}'s camera — movement, feeding, health, or general status.`);
+  document.getElementById('cam-ai-suggest').innerHTML = `
+    <span class="cam-ai-chip" onclick="askCamSuggestion('When did it last move?')">When did it last move?</span>
+    <span class="cam-ai-chip" onclick="askCamSuggestion('How is it doing today?')">How is it doing today?</span>
+    <span class="cam-ai-chip" onclick="askCamSuggestion('Any concerns right now?')">Any concerns right now?</span>`;
+  document.getElementById('cam-ai-overlay').classList.add('show');
+}
+function closeCamAI(){
+  document.getElementById('cam-ai-overlay').classList.remove('show');
+  currentCamIndex = null;
+}
+function addCamMsg(role, text){
+  const body = document.getElementById('cam-ai-body');
+  const el = document.createElement('div');
+  el.className = 'msg ' + role;
+  el.textContent = text;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+function askCamSuggestion(q){
+  document.getElementById('cam-ai-input').value = q;
+  sendCamAI();
+}
+function botReplyForCamera(camera, question){
+  const s = question.toLowerCase();
+  const events = CAM_EVENTS[camera.animal] || [];
+  const last = events[events.length - 1];
+
+  if(s.includes('when') || s.includes('time') || s.includes('move')){
+    const moveEvents = events.filter(e => e.event.toLowerCase().includes('mov') || e.event.toLowerCase().includes('pac') || e.event.toLowerCase().includes('walk'));
+    if(moveEvents.length){
+      const m = moveEvents[moveEvents.length - 1];
+      return `${camera.animal} was last seen moving at ${m.time} — "${m.event}".`;
+    }
+    return `${camera.animal} hasn't shown clear movement in the recent log. Last recorded activity was at ${last.time} — "${last.event}".`;
+  }
+  if(s.includes('eat') || s.includes('food') || s.includes('feed')){
+    const feedEvents = events.filter(e => e.event.toLowerCase().includes('feed') || e.event.toLowerCase().includes('ate') || e.event.toLowerCase().includes('meat') || e.event.toLowerCase().includes('browse'));
+    if(feedEvents.length){
+      const f = feedEvents[feedEvents.length - 1];
+      return `Last feeding activity for ${camera.animal} was at ${f.time} — "${f.event}".`;
+    }
+    return `No feeding activity logged yet for ${camera.animal} today.`;
+  }
+  if(s.includes('health') || s.includes('doing') || s.includes('ok') || s.includes('okay') || s.includes('how is')){
+    return camera.status === 'alert'
+      ? `${camera.animal} is currently flagged: "${camera.detail}". Last log entry was at ${last.time} — "${last.event}". Worth a check.`
+      : `${camera.animal} looks fine right now — "${camera.detail}". Last log entry was at ${last.time} — "${last.event}".`;
+  }
+  if(s.includes('concern') || s.includes('alert') || s.includes('problem') || s.includes('wrong')){
+    return camera.status === 'alert'
+      ? `Yes — ${camera.detail}. This was first flagged around ${events[Math.max(0,events.length-2)].time}.`
+      : `No concerns right now for ${camera.animal}. All recent activity looks normal.`;
+  }
+  if(s.includes('who') || s.includes('keeper') || s.includes('assigned')){
+    return `${camera.enclosure} is checked by the on-duty keeper for this zone — see the Team tab for who's assigned today.`;
+  }
+  return `Here's the recent log for ${camera.animal}: ` + events.slice(-3).map(e => `${e.time} - ${e.event}`).join('; ') + '.';
+}
+function sendCamAI(){
+  if(currentCamIndex === null) return;
+  const input = document.getElementById('cam-ai-input');
+  const val = input.value.trim();
+  if(!val) return;
+  addCamMsg('user', val);
+  input.value = '';
+  const camera = CAMERAS[currentCamIndex];
+  setTimeout(()=> addCamMsg('bot', botReplyForCamera(camera, val)), 450);
+}
+
+function toggleKeeperTask(id){
+  const task = KEEPER_TASKS.find(t=>t.id===id);
+  if(task) task.done = !task.done;
+  renderMain();
+}
+function bindTaskEvents(){}
+
+function updateTaskNote(id, value){
+  if(String(id).startsWith('R-')){
+    REMINDER_NOTES[id] = value;
+    return;
+  }
+  const task = KEEPER_TASKS.find(t=>t.id===id);
+  if(task) task.note = value;
+}
+
+async function submitTaskEvidence(id){
+  if(String(id).startsWith('R-')){
+    const reminderId = Number(String(id).replace('R-',''));
+    if(!COMPLETED_REMINDER_IDS.includes(reminderId)) COMPLETED_REMINDER_IDS.push(reminderId);
+    renderMain();
+    return;
+  }
+  const task = KEEPER_TASKS.find(t=>t.id===id);
+  if(task){
+    try{
+      if(task.backendId){
+        await submitBackendEvidence(task);
+      }
+      task.evidence = true;
+      task.done = true;
+      task.approval = 'pending';
+      task.backendStatus = 'submitted';
+      task.supervisorComment = '';
+      if(!task.note) task.note = 'Evidence submitted by keeper.';
+      showToast({title:'Evidence submitted', detail:`${task.text} sent for supervisor review`, time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+      if(backendTasksLoaded){
+        await loadTasksFromBackend();
+      }
+    }catch(error){
+      alert(error.message || 'Could not submit evidence');
+    }
+  }
+  renderMain();
+}
+
+function toggleReminderTask(id){
+  if(COMPLETED_REMINDER_IDS.includes(id)){
+    COMPLETED_REMINDER_IDS = COMPLETED_REMINDER_IDS.filter(x=>x!==id);
+  } else {
+    COMPLETED_REMINDER_IDS.push(id);
+  }
+  renderMain();
+}
+
+function goToMyTasks(){
+  currentTab = 'my-tasks';
+  renderNav();
+  renderMain();
+}
+
+function showReminderToast(){
+  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const alert = {
+    title:"Calendar reminder drafted",
+    detail:"This reminder will create an item in My Tasks when its date is due",
+    time:now
+  };
+  ALERTS.push(alert);
+  showToast(alert);
+  renderMain();
+}
+
+function simulateFeedingSave(){
+  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const alert = {
+    title:"Feeding checklist saved",
+    detail:"Today's feeding records are ready for behavior AI review",
+    time:now
+  };
+  ALERTS.push(alert);
+  showToast(alert);
+  renderMain();
+}
+
+function openUploadById(id){
+  pendingTaskIndex = KEEPER_TASKS.findIndex(t=>t.id===id);
+  if(pendingTaskIndex >= 0) openUpload(pendingTaskIndex);
+}
+
+/* ---------- UPLOAD MODAL ---------- */
+function openUpload(i){
+  pendingTaskIndex = i;
+  document.getElementById('modal-title').textContent = 'Upload Evidence';
+  document.getElementById('modal-sub').textContent = KEEPER_TASKS[i].text;
+  document.getElementById('capture-box').innerHTML = `<div id="capture-placeholder">📷<br>Tap to capture photo</div>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+function simulateCapture(){
+  const now = new Date();
+  const stamp = now.toLocaleDateString('en-GB') + ' · ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('capture-box').innerHTML = `
+    <img src="https://loremflickr.com/300/200/zoo,keeper/all?lock=${Math.floor(Math.random()*999)}">
+    <div class="stamp-overlay">${stamp} · KEEPER ID: SA-1042<br>GPS: 24.2075° N, 55.7447° E</div>`;
+}
+function submitEvidence(){
+  if(pendingTaskIndex!==null){
+    KEEPER_TASKS[pendingTaskIndex].done = true;
+    KEEPER_TASKS[pendingTaskIndex].evidence = true;
+  }
+  closeModal();
+  renderMain();
+}
+
+/* ---------- SUPERVISOR ---------- */
+function supervisorView(){
+  if(currentTab==='task-board'){
+    return topbar('Task Board', 'All keeper tasks · today') + `
+      <div class="card">
+        <table>
+          <tr><th>Task</th><th>Keeper</th><th>Status</th><th></th></tr>
+          ${KEEPER_TASKS.map(t=>`
+            <tr>
+              <td>${t.text}</td>
+              <td><span class="avatar">SA</span>S. Ahmed</td>
+              <td><span class="badge ${t.done?'badge-ok':'badge-pending'}">${t.done?'Completed':'Pending'}</span></td>
+              <td><button class="btn ghost">Reassign</button></td>
+            </tr>`).join('')}
+        </table>
+      </div>`;
+  }
+  if(currentTab==='monitoring'){
+    return topbar('Live Monitoring', 'All cameras · across your team') + monitoringGrid() + `
+      <div class="card" style="margin-top:14px;">
+        <div class="card-head"><span class="card-title">Recent Alert History</span></div>
+        ${ALERTS.length ? ALERTS.slice().reverse().map(a=>`
+          <div class="task-row"><div class="task-main"><div class="task-text">${a.title} — ${a.detail}</div><div class="task-meta">${a.time}</div></div></div>
+        `).join('') : `<div style="font-size:12.5px;color:var(--dim);padding:10px 0;">No alerts triggered yet in this session.</div>`}
+      </div>`;
+  }
+  if(currentTab==='behavior-review'){
+    return topbar('AI Behavior Alerts', 'Animals that need supervisor attention now') + `
+      <div class="grid g3" style="margin-bottom:14px;">
+        <div class="card"><div class="stat-icon i-red">!</div><div class="stat-num">1</div><div class="stat-label">Urgent</div></div>
+        <div class="card"><div class="stat-icon i-amber">!</div><div class="stat-num">1</div><div class="stat-label">Warning</div></div>
+        <div class="card"><div class="stat-icon i-blue">M</div><div class="stat-num">2</div><div class="stat-label">Waiting keeper check</div></div>
+      </div>
+      ${aiReviewTable()}`;
+  }
+  if(currentTab==='review'){
+    const submissions = reviewSubmissionsForDate(selectedReviewDate);
+    const pending = submissions.filter(s=>s.approval !== 'approved').length;
+    const zones = reviewZoneItems(submissions);
+    const zoneSubmissions = selectedReviewZone ? submissions.filter(s=>s.zone===selectedReviewZone) : submissions;
+    const enclosures = reviewEnclosureItems(zoneSubmissions);
+    const enclosureSubmissions = selectedReviewEnclosure ? submissions.filter(s=>s.enclosure===selectedReviewEnclosure) : [];
+    if(selectedReviewZone && !zones.some(z=>z.zone===selectedReviewZone)) selectedReviewZone = null;
+    if(selectedReviewEnclosure && !submissions.some(s=>s.enclosure===selectedReviewEnclosure)) selectedReviewEnclosure = null;
+    return topbar('Review Evidence', `${pending} waiting review · ${submissions.length} submitted`) + `
+      <div class="card day-switcher">
+        <button class="arrow-btn" onclick="shiftReviewDay(-1)">‹ Previous</button>
+        <div>
+          <div class="day-title">${formatTaskDate(selectedReviewDate)}</div>
+          <div class="day-sub">Choose a zone, then an enclosure, to review keeper evidence submissions.</div>
+        </div>
+        <button class="arrow-btn" onclick="shiftReviewDay(1)">Next ›</button>
+      </div>
+      ${selectedReviewEnclosure ? `
+        <div class="card-head" style="margin:0 0 10px;">
+          <button class="btn ghost" onclick="backToReviewEnclosures()">‹ Back to ${selectedReviewZone} enclosures</button>
+          <span class="badge badge-pending">${enclosureSubmissions.filter(s=>s.approval!=='approved').length} waiting review</span>
+        </div>
+        ${enclosureSubmissions.length ? enclosureSubmissions.map(s=>reviewCardFromSubmission(s)).join('') : `<div class="card" style="font-size:12.5px;color:var(--dim);">No evidence submissions for this enclosure.</div>`}
+      ` : selectedReviewZone ? `
+        <div class="card" id="review-enclosure-summary">
+          <div class="card-head">
+            <span class="card-title">${selectedReviewZone} evidence enclosures</span>
+            <span class="clear-filter" onclick="backToReviewZones()">Back to zones</span>
+          </div>
+          <div class="enclosure-summary-grid">
+            ${enclosures.length ? enclosures.map((item,index)=>`
+              <div class="enclosure-summary-item ${item.complete?'complete':''}" onclick="openReviewEnclosure('${item.enclosure.replace(/'/g, "\\'")}')">
+                <div class="enclosure-summary-main">
+                  <div class="enclosure-index">${index + 1}</div>
+                  <div>
+                    <b>${item.enclosure}</b>
+                    <span>${item.animals.join(', ')} · ${item.count} submission${item.count===1?'':'s'}</span>
+                  </div>
+                </div>
+                <div class="enclosure-status-row">
+                  ${item.pending ? `<span class="badge badge-pending">${item.pending} pending</span>` : ``}
+                  ${item.approved ? `<span class="badge badge-ok">${item.approved} approved</span>` : ``}
+                </div>
+              </div>
+            `).join('') : `<div style="font-size:12.5px;color:var(--dim);">No submitted evidence in this zone for this date.</div>`}
+          </div>
+        </div>
+      ` : `
+        <div class="card" id="review-zone-summary">
+          <div class="card-head"><span class="card-title">Evidence zones for ${formatTaskDate(selectedReviewDate)}</span></div>
+          <div class="enclosure-summary-grid">
+            ${zones.map((item,index)=>`
+              <div class="enclosure-summary-item ${item.complete?'complete':''}" onclick="openReviewZone('${item.zone.replace(/'/g, "\\'")}')">
+                <div class="enclosure-summary-main">
+                  <div class="enclosure-index">${index + 1}</div>
+                  <div>
+                    <b>${item.zone}</b>
+                    <span>${item.count ? `${item.count} submitted evidence item${item.count===1?'':'s'}` : 'No evidence submitted for this date'}</span>
+                  </div>
+                </div>
+                <div class="enclosure-status-row">
+                  ${item.count ? `${item.pending ? `<span class="badge badge-pending">${item.pending} pending</span>` : ``}${item.approved ? `<span class="badge badge-ok">${item.approved} approved</span>` : ``}` : `<span class="badge badge-pending">Empty</span>`}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `}`;
+  }
+  if(currentTab==='compliance'){
+    return topbar('SOP Compliance', 'This week') + `
+      <div class="grid g3">
+        <div class="card"><div class="stat-icon i-green">☑</div><div class="stat-num">94%</div><div class="stat-label">Overall compliance</div></div>
+        <div class="card"><div class="stat-icon i-red">⚠</div><div class="stat-num">3</div><div class="stat-label">SOP deviations flagged</div></div>
+        <div class="card"><div class="stat-icon i-amber">&#9201;</div><div class="stat-num">18 min</div><div class="stat-label">Avg. task completion time</div></div>
+      </div>`;
+  }
+  if(currentTab==='team'){
+    return topbar('Team', 'Keepers under your supervision') + `
+      <div class="card">
+        <table>
+          <tr><th>Name</th><th>Role</th><th>Tasks today</th><th>Status</th></tr>
+          ${TEAM.map(m=>`
+            <tr>
+              <td><span class="avatar">${m.name.split(' ').map(w=>w[0]).join('')}</span>${m.name}</td>
+              <td>${m.role}</td>
+              <td class="mono">${m.tasksToday}</td>
+              <td><span class="badge ${m.status==='ok'?'badge-ok':m.status==='pending'?'badge-pending':'badge-overdue'}">${m.status}</span></td>
+            </tr>`).join('')}
+        </table>
+      </div>`;
+  }
+}
+
+/* ---------- MANAGEMENT DASHBOARD ---------- */
+function managementView(){
+  if(currentTab==='dashboard'){
+    return topbar("Operations Dashboard", "All sites · live") + `
+      <div class="grid g5" style="margin-bottom:14px;">
+        <div class="card"><div class="stat-icon i-green">&#129409;</div><div class="stat-num">1,519</div><div class="stat-label">Animals</div></div>
+        <div class="card"><div class="stat-icon i-amber">+</div><div class="stat-num">16.4K</div><div class="stat-label">Medical records</div></div>
+        <div class="card"><div class="stat-icon i-red">🧪</div><div class="stat-num">21,403</div><div class="stat-label">Lab requests</div></div>
+        <div class="card"><div class="stat-icon i-blue">◎</div><div class="stat-num">1,674</div><div class="stat-label">Active users</div></div>
+        <div class="card"><div class="stat-icon i-purple">💊</div><div class="stat-num">54</div><div class="stat-label">Low stock medicines</div></div>
+      </div>
+      <div class="grid g3" style="margin-bottom:14px;">
+        <div class="card">
+          <div class="card-head"><span class="card-title">Animal Transfer</span><span class="card-more">⋮</span></div>
+          <div style="height:150px;"><canvas id="chartTransfer"></canvas></div>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--green);"></span>In-house transfers</span><span class="legend-val">3,850</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--blue);"></span>Inter-site transfer</span><span class="legend-val">2,350</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--amber);"></span>External transfer</span><span class="legend-val">149</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Pending Requests (Pharmacy)</span><span class="card-more">⋮</span></div>
+          <div style="height:150px;"><canvas id="chartPending"></canvas></div>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--dim-2);"></span>Low</span><span class="legend-val">130</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--amber);"></span>High</span><span class="legend-val">34</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--purple);"></span>Moderate</span><span class="legend-val">18</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--red);"></span>Critical</span><span class="legend-val">18</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Lab Requests</span><span class="card-more">⋮</span></div>
+          <div style="height:150px;"><canvas id="chartLab"></canvas></div>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-key">Total requests</span><span class="legend-val">23</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--green);"></span>Completed</span><span class="legend-val">87%</span></div>
+            <div class="legend-row"><span class="legend-key"><span class="legend-dot" style="background:var(--amber);"></span>Pending</span><span class="legend-val">8%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-head"><span class="card-title">Eggs</span><span class="card-more">⋮</span></div>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-key">Collected</span><span class="legend-val">171</span></div>
+            <div class="legend-row"><span class="legend-key">In nest</span><span class="legend-val">13</span></div>
+            <div class="legend-row"><span class="legend-key">In nursery</span><span class="legend-val">12</span></div>
+            <div class="legend-row"><span class="legend-key">Hatched</span><span class="legend-val">95</span></div>
+            <div class="legend-row"><span class="legend-key">Discarded</span><span class="legend-val">7</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Weekly Accessions</span><span class="card-more">⋮</span></div>
+          <div style="height:150px;"><canvas id="chartAccession"></canvas></div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">${managerEvidenceReviewCard()}</div>`;
+  }
+  if(currentTab==='calendar'){
+    return calendarPageView();
+  }
+  if(currentTab==='animal-intel'){
+    return topbar('Animal Intelligence', 'Species knowledge, individual baselines, and feeding risk') + `
+      <div class="grid g5" style="margin-bottom:14px;">
+        <div class="card"><div class="stat-icon i-green">SP</div><div class="stat-num">${SPECIES_PROFILES.length}</div><div class="stat-label">Species profiles</div></div>
+        <div class="card"><div class="stat-icon i-blue">ID</div><div class="stat-num">${ANIMAL_BASELINES.length}</div><div class="stat-label">Animal baselines</div></div>
+        <div class="card"><div class="stat-icon i-amber">F</div><div class="stat-num">2</div><div class="stat-label">Feeding anomalies</div></div>
+        <div class="card"><div class="stat-icon i-red">!</div><div class="stat-num">1</div><div class="stat-label">Urgent behavior risk</div></div>
+        <div class="card"><div class="stat-icon i-purple">AI</div><div class="stat-num">75%</div><div class="stat-label">AI-ready profiles</div></div>
+      </div>
+      ${aiReviewTable()}
+      <div style="margin-top:14px;">${feedingChecklistTable()}</div>`;
+  }
+  if(currentTab==='sites'){
+    return topbar('Sites', 'All zoo locations') + `
+      <div class="grid g3">
+        <div class="card"><div class="stat-num">Al Ain</div><div class="stat-label">412 animals · 98% compliance</div></div>
+        <div class="card"><div class="stat-num">Dubai Safari</div><div class="stat-label">687 animals · 91% compliance</div></div>
+        <div class="card"><div class="stat-num">Sharjah</div><div class="stat-label">420 animals · 95% compliance</div></div>
+      </div>`;
+  }
+  if(currentTab==='reports'){
+    return topbar('Reports', 'Export daily, weekly & monthly reports') + `
+      <div class="card" style="text-align:center;padding:50px;color:var(--dim);">PDF / Excel export would render here in the full build.</div>`;
+  }
+}
+
+function drawCharts(){
+  Chart.defaults.color = '#8996A3';
+  Chart.defaults.font.family = 'Inter';
+  Chart.defaults.font.size = 11;
+
+  new Chart(document.getElementById('chartTransfer'), {
+    type:'doughnut',
+    data:{ labels:['In-house','Inter-site','External'], datasets:[{ data:[3850,2350,149], backgroundColor:['#16A6A0','#4C8DF5','#F2B33D'], borderWidth:0 }] },
+    options:{ cutout:'70%', plugins:{legend:{display:false}} }
+  });
+  new Chart(document.getElementById('chartPending'), {
+    type:'doughnut',
+    data:{ labels:['Low','High','Moderate','Critical'], datasets:[{ data:[130,34,18,18], backgroundColor:['#16A6A0','#F2B33D','#8B7FD1','#EF6461'], borderWidth:0 }] },
+    options:{ cutout:'70%', plugins:{legend:{display:false}} }
+  });
+  new Chart(document.getElementById('chartLab'), {
+    type:'doughnut',
+    data:{ labels:['Completed','Pending','In-progress'], datasets:[{ data:[87,8,5], backgroundColor:['#16A6A0','#EF6461','#F2B33D'], borderWidth:0 }] },
+    options:{ cutout:'70%', plugins:{legend:{display:false}} }
+  });
+  new Chart(document.getElementById('chartAccession'), {
+    type:'bar',
+    data:{ labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets:[{ data:[52,61,44,70,58,65,49], backgroundColor:'#16A6A0', borderRadius:4 }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}}, y:{grid:{color:'#EEF1F4'}} } }
+  });
+}
+
+/* ---------- ADMIN ---------- */
+function adminView(){
+  if(currentTab==='users'){
+    return topbar('Users', `${USERS.length} accounts`) + `
+      <div class="card">
+        <table>
+          <tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th></tr>
+          ${USERS.map((u,i)=>`
+            <tr>
+              <td><span class="avatar">${u.name.split(' ').map(w=>w[0]).join('')}</span>${u.name}</td>
+              <td class="mono" style="color:var(--dim);">${u.email}</td>
+              <td><span class="role-chip ${ROLE_CHIP[u.role.toLowerCase()]}">${u.role}</span></td>
+              <td><span class="toggle ${u.active?'on':''}" onclick="toggleUser(${i})"></span></td>
+            </tr>`).join('')}
+        </table>
+      </div>`;
+  }
+  if(currentTab==='calendar'){
+    return calendarPageView();
+  }
+  if(currentTab==='species-profiles'){
+    return topbar('Species Profiles', 'Knowledge base for behavior AI and alert rules') + `
+      <div class="grid g3" style="margin-bottom:14px;">
+        <div class="card"><div class="stat-icon i-green">SP</div><div class="stat-num">${SPECIES_PROFILES.length}</div><div class="stat-label">Profiles configured</div></div>
+        <div class="card"><div class="stat-icon i-blue">AI</div><div class="stat-num">12</div><div class="stat-label">Alert rules</div></div>
+        <div class="card"><div class="stat-icon i-amber">Vet</div><div class="stat-num">3</div><div class="stat-label">Need vet approval</div></div>
+      </div>
+      ${speciesProfileCards()}
+      <div class="card" style="margin-top:14px;">
+        <div class="card-head"><span class="card-title">Add / edit species profile</span><span class="badge badge-pending">Frontend only</span></div>
+        <div class="checklist-form">
+          <div><div class="field-label">Species</div><input class="select-input" value="Red Fox"></div>
+          <div><div class="field-label">Diet type</div><input class="select-input" value="Omnivore"></div>
+          <div class="wide"><div class="field-label">Normal behavior</div><textarea class="text-area">Active at dusk/night, solitary or pair-based, moderate to high movement.</textarea></div>
+          <div class="wide"><div class="field-label">Warning signs and alert rules</div><textarea class="text-area">No food intake, limping, hiding too long, excessive pacing, unusual aggression.</textarea></div>
+        </div>
+      </div>`;
+  }
+  if(currentTab==='roles'){
+    return topbar('Roles & Permissions', 'Configure access per role') + `
+      <div class="card">
+        <table>
+          <tr><th>Permission</th><th>Keeper</th><th>Supervisor</th><th>Management</th><th>Admin</th></tr>
+          <tr><td>Complete tasks</td><td>✓</td><td>✓</td><td>—</td><td>✓</td></tr>
+          <tr><td>Assign tasks</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td>View dashboard & reports</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td>Manage users</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+        </table>
+      </div>`;
+  }
+  if(currentTab==='config'){
+    return topbar('System Config', 'Global settings') + `
+      <div class="card">
+        <div class="task-row"><div class="task-main"><div class="task-text">Require GPS tag on photo evidence</div></div><span class="toggle on"></span></div>
+        <div class="task-row"><div class="task-main"><div class="task-text">Auto-escalate overdue tasks after 2 hours</div></div><span class="toggle on"></span></div>
+        <div class="task-row"><div class="task-main"><div class="task-text">Allow offline task completion</div></div><span class="toggle"></span></div>
+      </div>`;
+  }
+  if(currentTab==='audit'){
+    return topbar('Audit Log', 'System activity') + `
+      <div class="card mono" style="font-size:12px;line-height:2.1;color:var(--dim);">
+        07 Jul 09:20 — S. Ahmed submitted evidence for "Feeding confirmation — Sultan"<br>
+        07 Jul 08:45 — M. Khalid marked "Water quality test" pending<br>
+        07 Jul 08:10 — Admin L. Grant deactivated<br>
+        06 Jul 18:02 — Supervisor approved 6 evidence submissions
+      </div>`;
+  }
+}
+function toggleUser(i){ USERS[i].active = !USERS[i].active; renderMain(); }
+
+/* ---------------- LOGIN ---------------- */
+function enterApp(role){
+  currentRole = role || 'keeper';
+  currentTab = NAV[currentRole][0].id;
+  document.querySelectorAll('.role-row').forEach(r=>r.classList.toggle('active', r.dataset.role===currentRole));
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').classList.remove('hidden');
+  renderNav();
+  renderMain();
+}
+async function enterAppWithBackend(user){
+  const role = roleFromBackendUser(user);
+  currentRole = role;
+  currentTab = NAV[currentRole][0].id;
+  document.querySelectorAll('.role-row').forEach(r=>r.classList.toggle('active', r.dataset.role===currentRole));
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').classList.remove('hidden');
+  renderNav();
+  renderMain();
+  try{
+    await loadTasksFromBackend();
+    renderMain();
+  }catch(error){
+    console.warn('Backend tasks could not be loaded:', error.message);
+    showToast({title:'Backend warning', detail:error.message, time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+  }
+}
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value.trim();
+  const errorEl = document.getElementById('login-error');
+  errorEl.style.display = 'none';
+  if(!email || !pass){
+    errorEl.textContent = 'Enter your email/staff ID and password to continue.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  try{
+    const user = await loginUser(email, pass);
+    await enterAppWithBackend(user);
+  }catch(error){
+    errorEl.textContent = error.message || 'Login failed. Check backend is running.';
+    errorEl.style.display = 'block';
+  }
+}
+async function quickLogin(role){
+  const demo = DEMO_LOGIN[role] || DEMO_LOGIN.keeper;
+  document.getElementById('login-email').value = demo.email;
+  document.getElementById('login-password').value = demo.password;
+  await doLogin();
+}
+function signOut(){
+  authToken = '';
+  currentUser = null;
+  backendTasksLoaded = false;
+  localStorage.removeItem('zooopsToken');
+  localStorage.removeItem('zooopsUser');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-root').classList.add('hidden');
+}
+
+/* ---------------- NOTIFICATION BELL ---------------- */
+function toggleBell(e){
+  e.stopPropagation();
+  document.getElementById('bell-panel').classList.toggle('show');
+}
+document.addEventListener('click', ()=>{
+  const p = document.getElementById('bell-panel');
+  if(p) p.classList.remove('show');
+});
+
+/* ---------------- ALERT SIMULATION (mock camera/AI feed) ---------------- */
+function fireAlert(){
+  const tpl = ALERT_TEMPLATES[Math.floor(Math.random()*ALERT_TEMPLATES.length)];
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const alert = {...tpl, time};
+  ALERTS.push(alert);
+  showToast(alert);
+  const fabDot = document.getElementById('chat-fab-dot');
+  if(fabDot) fabDot.style.display = 'block';
+  renderMain();
+}
+function showToast(alert){
+  const stack = document.getElementById('toast-stack');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `
+    <div class="tt">🔴 ${alert.title}</div>
+    <div class="ts">${alert.detail}</div>
+    <div class="ta">
+      <button onclick="this.closest('.toast').remove()">Dismiss</button>
+      <button onclick="goToMonitoring(); this.closest('.toast').remove();" style="background:var(--red-dim); color:var(--red); border-color:transparent;">View</button>
+    </div>`;
+  stack.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode) el.remove(); }, 9000);
+}
+function goToMonitoring(){
+  if(currentRole==='keeper' || currentRole==='supervisor'){
+    currentTab = 'monitoring';
+    renderNav(); renderMain();
+  }
+}
+setInterval(fireAlert, 25000);
+setTimeout(fireAlert, 6000);
+
+/* ---------------- CHAT ASSISTANT ---------------- */
+function addMsg(role, text){
+  const body = document.getElementById('chat-body');
+  const el = document.createElement('div');
+  el.className = 'msg ' + role;
+  el.textContent = text;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+function toggleChat(){
+  const panel = document.getElementById('chat-panel');
+  panel.classList.toggle('show');
+  const fabDot = document.getElementById('chat-fab-dot');
+  if(panel.classList.contains('show') && fabDot) fabDot.style.display = 'none';
+  if(panel.classList.contains('show') && !document.getElementById('chat-body').dataset.greeted){
+    addMsg('bot', "Hi, I'm the Worldwide Zoo Consultants Assistant. Ask me about your tasks, animals, or recent alerts.");
+    document.getElementById('chat-body').dataset.greeted = '1';
+  }
+}
+function botReply(q){
+  const s = q.toLowerCase();
+  if(s.includes('task')){
+    const tasks = tasksForDate(selectedTaskDate);
+    const done = tasks.filter(t=>t.done).length;
+    return `You have ${tasks.length - done} task(s) still pending for ${formatTaskDate(selectedTaskDate)}, out of ${tasks.length} total. Management/admin calendar assignments are included in My Tasks for their scheduled day.`;
+  }
+  if(s.includes('alert') || s.includes('camera') || s.includes('behav')){
+    return ALERTS.length
+      ? `There ${ALERTS.length===1?'is':'are'} ${ALERTS.length} active alert(s) right now. Latest: "${ALERTS[ALERTS.length-1].detail}". Check Live Monitoring for the full camera view.`
+      : `No behaviour alerts right now — all cameras are showing normal activity.`;
+  }
+  if(s.includes('animal')){
+    return `You're tracking ${MY_ANIMALS.length} animals in your enclosure. Open "My Animals" to see profiles and photos.`;
+  }
+  if(s.includes('upload') || s.includes('photo') || s.includes('evidence')){
+    return `To log evidence, go to "My Tasks" and tap "Upload photo" next to any pending task — it auto-stamps the photo with date, time, and GPS.`;
+  }
+  if(s.includes('hi') || s.includes('hello')){
+    return `Hello! Ask me about your tasks, animals, or any active alerts.`;
+  }
+  return `I can help with tasks, animal info, or alerts — try asking "any alerts?" or "what tasks are pending?"`;
+}
+function sendChat(){
+  const input = document.getElementById('chat-input');
+  const val = input.value.trim();
+  if(!val) return;
+  addMsg('user', val);
+  input.value = '';
+  setTimeout(()=> addMsg('bot', botReply(val)), 450);
+}
+
+/* ---------------- INIT ---------------- */
+renderNav();
+renderMain();
+</script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,680 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZooOps Real Workflow</title>
+  <style>
+    :root{
+      --bg:#f2f5f8; --panel:#fff; --panel2:#f6f9fc; --text:#202b39; --dim:#8090a3;
+      --border:#dde6ef; --green:#16a6a0; --amber:#f2b33d; --red:#ef6461; --blue:#4c8df5;
+      --shadow:0 10px 28px rgba(32,43,57,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+    button,input,select,textarea{font:inherit}
+    .login-screen{min-height:100vh;display:grid;place-items:center;background:
+      linear-gradient(rgba(242,245,248,.25),rgba(242,245,248,.6)),
+      url("https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=1600&q=80") center/cover}
+    .login-card{width:min(460px,92vw);background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:32px}
+    .brand{display:flex;gap:14px;align-items:center;margin-bottom:28px}
+    .badge{width:48px;height:48px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800}
+    .brand-title{font-size:22px;font-weight:800}.muted{color:var(--dim)}
+    .login-heading{text-align:center;margin:8px 0 22px}.login-heading h1{font-size:28px;margin:0 0 8px}
+    .oauth-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+    .oauth-btn{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;font-weight:800;cursor:pointer}
+    .oauth-btn:disabled{opacity:.55;cursor:not-allowed}
+    .divider{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;color:var(--dim);font-weight:800;margin:18px 0}
+    .divider:before,.divider:after{content:"";height:1px;background:var(--border)}
+    .field{margin:14px 0}.label{font-size:14px;font-weight:700;margin-bottom:8px}
+    .input,.select,.textarea{width:100%;border:1px solid var(--border);background:var(--panel2);border-radius:11px;padding:13px 14px;color:var(--text)}
+    .textarea{min-height:92px;resize:vertical}
+    .btn{border:0;border-radius:11px;padding:12px 16px;font-weight:800;cursor:pointer}
+    .btn.primary{background:var(--green);color:#fff;box-shadow:0 10px 20px rgba(22,166,160,.16)}
+    .btn.secondary{background:#fff;border:1px solid var(--border);color:var(--text)}
+    .btn.danger{background:#ffe5e5;color:#d64242}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.space{justify-content:space-between}
+    .error{color:var(--red);min-height:22px;margin-top:12px}
+    .app{display:none;min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:285px;background:#fff;border-right:1px solid var(--border);padding:24px}
+    .main{margin-left:285px;padding:28px 32px 80px}.side-label{font-size:13px;text-transform:uppercase;color:#a7b3c1;font-weight:800;letter-spacing:.08em;margin:28px 0 10px}
+    .role-pill,.nav-item{padding:13px 14px;border-radius:10px;margin:8px 0;font-weight:700;color:var(--dim)}
+    .role-pill.active,.nav-item.active{background:#e8faf8;color:var(--green);border:1px solid var(--green)}
+    .nav-item{cursor:pointer}.topbar{display:flex;justify-content:space-between;align-items:start;margin-bottom:22px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+    .grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .task{display:grid;grid-template-columns:1fr 440px;gap:18px;border-top:1px solid var(--border);padding:18px 0}
+    .task:first-child{border-top:0}.task-title{font-size:18px;font-weight:800}.meta{color:var(--dim);font-size:14px;margin-top:4px}
+    .info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+    .info{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px}
+    .info b{display:block;font-size:13px}.tag{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:800;background:#fff3dc;color:#ed9c13}
+    .tag.green{background:#ddf8f5;color:var(--green)}.tag.red{background:#ffe5e5;color:var(--red)}.tag.blue{background:#e8f0ff;color:var(--blue)}
+    .evidence-box{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:14px}
+    .file-list{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+    .file-chip{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;min-width:120px;font-size:13px}
+    .file-chip b{display:block;color:var(--green)}.section-title{font-size:18px;font-weight:800;margin-bottom:12px}
+    .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
+    .profile-head{display:flex;align-items:center;gap:16px}
+    .avatar{width:74px;height:74px;border-radius:50%;background:#e8faf8;border:2px solid var(--green);display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--green)}
+    @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <section class="login-screen" id="login-screen">
+    <div class="login-card" id="login-card">
+      <div class="brand">
+        <div class="badge">WZC</div>
+        <div><div class="brand-title">Worldwide Zoo Consultants</div></div>
+      </div>
+      <div class="login-heading">
+        <h1>Welcome to ZooOps</h1>
+        <div class="muted">Sign in to continue</div>
+      </div>
+      <div class="oauth-grid">
+        <button class="oauth-btn" onclick="loginWithGoogle()">Google</button>
+        <button class="oauth-btn" disabled title="Microsoft login can be added after Microsoft Entra setup">Microsoft</button>
+      </div>
+      <div class="divider">OR</div>
+      <div class="field"><div class="label">Email address</div><input class="input" id="login-email" autocomplete="off"></div>
+      <div class="field"><div class="label">Password</div><input class="input" id="login-password" type="password" autocomplete="new-password"></div>
+      <button class="btn primary" style="width:100%" onclick="login()">Sign in</button>
+      <div class="error" id="login-error"></div>
+    </div>
+  </section>
+
+  <section class="app" id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="badge">WZC</div>
+        <div><div class="brand-title" style="font-size:16px">ZooOps</div><div class="muted" id="side-user">Signed in</div></div>
+      </div>
+      <div class="side-label">Role / Permission</div>
+      <div class="role-pill active" id="role-pill">Role</div>
+      <div class="side-label">Navigation</div>
+      <div class="nav-item active" data-view="operations" onclick="setView('operations')">My Tasks</div>
+      <div class="nav-item" data-view="profile" onclick="setView('profile')">My Profile</div>
+      <div class="nav-item" data-view="create" onclick="setView('create')" id="create-nav">Create task</div>
+      <div class="nav-item" data-view="invite" onclick="setView('invite')" id="invite-nav">Invite users</div>
+      <div class="nav-item" data-view="review" onclick="setView('review')">Evidence review</div>
+      <div class="nav-item" onclick="signOut()">Sign out</div>
+    </aside>
+    <main class="main" id="main"></main>
+  </section>
+
+  <script>
+    const BACKEND_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:5000'
+  : 'https://YOUR-RENDER-BACKEND-URL.onrender.com';
+
+    const API_BASE = `${BACKEND_URL}/api`;
+    const UPLOAD_BASE = BACKEND_URL;
+    let token = localStorage.getItem('zooops_token') || '';
+    let currentUser = JSON.parse(localStorage.getItem('zooops_user') || 'null');
+    let options = { keepers: [], zones: [], enclosures: [], animals: [], users: [], roles: [] };
+    let tasks = [];
+    let evidence = [];
+    let invitations = [];
+    let currentView = 'operations';
+    const permissionLabels = {
+      'tasks.read': 'View tasks',
+      'tasks.create': 'Create tasks',
+      'tasks.update': 'Update tasks',
+      'evidence.read': 'View evidence',
+      'evidence.create': 'Submit evidence',
+      'evidence.uploadPhoto': 'Upload photos',
+      'evidence.uploadVideo': 'Upload videos',
+      'evidence.uploadFile': 'Upload files',
+      'evidence.approve': 'Approve evidence',
+      'evidence.return': 'Request updates',
+      'users.create': 'Invite users',
+      'users.manage': 'Manage users',
+      'reports.read': 'View reports',
+      'calendar.manage': 'Manage calendar'
+    };
+
+    function roleName(){ return currentUser?.role?.name || currentUser?.role || ''; }
+    function canCreateTask(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
+    function canReview(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
+    function canSubmitEvidence(){ return roleName() === 'Keeper'; }
+    function userPermissions(){
+      const rolePermissions = (currentUser?.role?.permissions || []).flatMap((permission) => {
+        return (permission.actions || []).map((action) => `${permission.resource}.${action}`);
+      });
+      return [...rolePermissions, ...(currentUser?.customPermissions || [])];
+    }
+    function canInviteUsers(){
+      const permissions = userPermissions();
+      return ['Management','Admin'].includes(roleName()) ||
+        permissions.includes('users.create') ||
+        permissions.includes('users.manage');
+    }
+    function rolePermissionValues(role){
+      if(!role) return [];
+      const roleValues = (role?.permissions || []).flatMap((permission) => {
+        return (permission.actions || []).map((action) => `${permission.resource}.${action}`);
+      });
+      const defaultUploadValues = [
+        'evidence.uploadPhoto',
+        'evidence.uploadVideo',
+        'evidence.uploadFile'
+      ];
+      return [...new Set([...roleValues, ...defaultUploadValues])];
+    }
+    function permissionLabel(value){
+      return permissionLabels[value] || value;
+    }
+    function qs(id){ return document.getElementById(id); }
+    function fmtDate(value){ return value ? new Date(value).toLocaleString([], { dateStyle:'medium', timeStyle:'short' }) : '-'; }
+    function statusLabel(status){
+      const labels = {
+        assigned:'Assigned', draft:'Draft', submitted:'Pending review',
+        supervisor_approved:'Approved by supervisor', update_requested:'Update requested',
+        manager_review:'Sent to manager', manager_returned:'Returned by manager',
+        manager_approved:'Manager approved', completed:'Completed', cancelled:'Cancelled'
+      };
+      return labels[status] || status;
+    }
+    function tagClass(status){
+      if(['supervisor_approved','manager_approved','completed'].includes(status)) return 'green';
+      if(['update_requested','manager_returned','cancelled'].includes(status)) return 'red';
+      if(['submitted','manager_review'].includes(status)) return 'blue';
+      return '';
+    }
+    async function api(path, opts = {}){
+      const headers = opts.headers || {};
+      if(token) headers.Authorization = `Bearer ${token}`;
+      if(!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+      const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(data.message || 'Request failed');
+      return data;
+    }
+    async function login(){
+      qs('login-error').textContent = '';
+      try{
+        const data = await api('/auth/login', {
+          method:'POST',
+          body: JSON.stringify({ email: qs('login-email').value, password: qs('login-password').value })
+        });
+        token = data.token;
+        currentUser = data.user;
+        localStorage.setItem('zooops_token', token);
+        localStorage.setItem('zooops_user', JSON.stringify(currentUser));
+        await startApp();
+      }catch(err){ qs('login-error').textContent = err.message; }
+    }
+    function loginWithGoogle(){
+      window.location.href = `${API_BASE}/auth/google`;
+    }
+    async function showInviteRegistration(inviteToken){
+      qs('login-card').innerHTML = `
+        <div class="brand">
+          <div class="badge">WZC</div>
+          <div><div class="brand-title">Create ZooOps account</div><div class="muted">You were invited to join ZooOps</div></div>
+        </div>
+        <div class="card" style="box-shadow:none;margin:0 0 14px 0" id="invite-details">Checking invitation...</div>
+        <div class="field"><div class="label">Create password</div><input class="input" id="invite-password" type="password"></div>
+        <div class="field"><div class="label">Confirm password</div><input class="input" id="invite-password-confirm" type="password"></div>
+        <button class="btn primary" style="width:100%" onclick="registerFromInvite('${inviteToken}')">Create account</button>
+        <button class="btn secondary" style="width:100%;margin-top:10px" onclick="location.href='App3.html'">Back to sign in</button>
+        <div class="error" id="invite-error"></div>`;
+      try{
+        const data = await api(`/invitations/verify/${inviteToken}`);
+        const invite = data.invitation;
+        qs('invite-details').innerHTML = `
+          <div><b>Name</b><div class="muted">${invite.fullName}</div></div>
+          <div style="margin-top:8px"><b>Email</b><div class="muted">${invite.email}</div></div>
+          <div style="margin-top:8px"><b>Role</b><div class="muted">${invite.role?.name || '-'}</div></div>`;
+      }catch(err){
+        qs('invite-details').innerHTML = `<span class="tag red">${err.message}</span>`;
+      }
+    }
+    async function registerFromInvite(inviteToken){
+      qs('invite-error').textContent = '';
+      const password = qs('invite-password').value;
+      const confirm = qs('invite-password-confirm').value;
+      if(password !== confirm){
+        qs('invite-error').textContent = 'Passwords do not match.';
+        return;
+      }
+      try{
+        const data = await api('/auth/register-from-invite', {
+          method:'POST',
+          body: JSON.stringify({ inviteToken, password })
+        });
+        token = data.token;
+        currentUser = data.user;
+        localStorage.setItem('zooops_token', token);
+        localStorage.setItem('zooops_user', JSON.stringify(currentUser));
+        history.replaceState({}, '', 'App3.html');
+        await startApp();
+      }catch(err){ qs('invite-error').textContent = err.message; }
+    }
+    function signOut(){
+      localStorage.removeItem('zooops_token');
+      localStorage.removeItem('zooops_user');
+      location.reload();
+    }
+    async function finishOAuthLogin(oauthToken){
+      token = oauthToken;
+      localStorage.setItem('zooops_token', token);
+      try{
+        const data = await api('/auth/me');
+        currentUser = data.user;
+        localStorage.setItem('zooops_user', JSON.stringify(currentUser));
+        history.replaceState({}, '', 'App3.html');
+        await startApp();
+      }catch(err){
+        localStorage.removeItem('zooops_token');
+        token = '';
+        qs('login-error').textContent = err.message;
+      }
+    }
+    async function startApp(){
+      qs('login-screen').style.display = 'none';
+      qs('app').style.display = 'block';
+      qs('side-user').textContent = currentUser.fullName;
+      qs('role-pill').textContent = `${roleName()} permissions`;
+      qs('create-nav').style.display = canCreateTask() ? 'block' : 'none';
+      qs('invite-nav').style.display = canInviteUsers() ? 'block' : 'none';
+      await loadAll();
+      render();
+    }
+    async function loadAll(){
+      options = await api('/tasks/options');
+      const taskQuery = roleName() === 'Management' ? '?managerQueue=false' : '';
+      const taskData = await api(`/tasks${taskQuery}`);
+      tasks = taskData.tasks || [];
+      const evidenceData = await api('/evidence');
+      evidence = evidenceData.evidence || [];
+      if(canInviteUsers()){
+        const invitationData = await api('/invitations');
+        invitations = invitationData.invitations || [];
+      } else {
+        invitations = [];
+      }
+    }
+    function setView(view){ currentView = view; render(); }
+    function render(){
+      document.querySelectorAll('.nav-item').forEach((el) => el.classList.remove('active'));
+      document.querySelector(`.nav-item[data-view="${currentView}"]`)?.classList.add('active');
+      if(currentView === 'create') return renderCreateTask();
+      if(currentView === 'invite') return renderInviteUsers();
+      if(currentView === 'profile') return renderProfile();
+      if(currentView === 'review') return renderReview();
+      renderOperations();
+    }
+    function taskEvidence(taskId){
+      return evidence.filter((item) => item.task && item.task._id === taskId);
+    }
+    function renderOperations(){
+      const total = tasks.length;
+      const done = tasks.filter((task) => ['supervisor_approved','manager_approved','completed'].includes(task.status)).length;
+      qs('main').innerHTML = `
+        <div class="topbar">
+          <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
+          <span class="tag green">${roleName()} view</span>
+        </div>
+        <div class="grid g3">
+          <div class="stat"><div class="stat-num">${total}</div><div class="muted">Tasks visible to you</div></div>
+          <div class="stat"><div class="stat-num">${done}</div><div class="muted">Approved / completed</div></div>
+          <div class="stat"><div class="stat-num">${evidence.length}</div><div class="muted">Evidence records</div></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Tasks</div>
+          ${tasks.length ? tasks.map(renderTask).join('') : '<div class="muted">No tasks found. Manager/Admin can create one from Create task.</div>'}
+        </div>`;
+    }
+    function renderTask(task){
+      const ev = taskEvidence(task._id);
+      const latest = ev[0];
+      return `<div class="task">
+        <div>
+          <div class="row space">
+            <div><div class="task-title">${task.title}</div><div class="meta">${fmtDate(task.dueDate)} - ${task.assignedTo?.fullName || 'No keeper'}</div></div>
+            <span class="tag ${tagClass(task.status)}">${statusLabel(task.status)}</span>
+          </div>
+          <div class="info-grid">
+            <div class="info"><b>Zone</b><span>${task.zone?.name || '-'}</span></div>
+            <div class="info"><b>Enclosure</b><span>${task.enclosure?.name || '-'}</span></div>
+            <div class="info"><b>Animal</b><span>${task.animal?.name || '-'}</span></div>
+            <div class="info"><b>Task</b><span>${task.taskType || '-'}</span></div>
+            <div class="info"><b>Feed / item</b><span>${task.feedItem || 'Not applicable'}</span></div>
+            <div class="info"><b>Created by</b><span>${task.createdBy?.fullName || '-'}</span></div>
+          </div>
+          <div class="info" style="margin-top:10px"><b>Instructions</b><span>${task.description || '-'}</span></div>
+          ${task.supervisorComment ? `<div class="info" style="margin-top:10px;border-color:var(--red)"><b>Supervisor comment</b><span>${task.supervisorComment}</span></div>` : ''}
+          ${task.managerComment ? `<div class="info" style="margin-top:10px;border-color:var(--red)"><b>Manager comment</b><span>${task.managerComment}</span></div>` : ''}
+        </div>
+        ${renderActionBox(task, latest)}
+      </div>`;
+    }
+    function renderActionBox(task, latest){
+      if(canSubmitEvidence()){
+        return `<div class="evidence-box">
+          <div class="section-title">Keeper evidence</div>
+          ${renderFiles(latest)}
+          <textarea class="textarea" id="note-${task._id}" placeholder="Write keeper note">${latest?.note || ''}</textarea>
+          <input class="input" id="files-${task._id}" type="file" multiple style="margin:10px 0">
+          <div class="row">
+            <button class="btn secondary" onclick="saveEvidence('${task._id}', false)">Save draft</button>
+            <button class="btn primary" onclick="saveEvidence('${task._id}', true)">Send for approval</button>
+          </div>
+        </div>`;
+      }
+      if(canReview()){
+        return `<div class="evidence-box">
+          <div class="section-title">Review evidence</div>
+          ${renderFiles(latest)}
+          <div class="info"><b>Keeper note</b><span>${latest?.note || 'No evidence submitted yet.'}</span></div>
+          <textarea class="textarea" id="comment-${task._id}" placeholder="Comment if returning or escalating"></textarea>
+          <div class="row" style="margin-top:10px">
+            ${roleName() === 'Supervisor' && task.status === 'submitted' ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Approve evidence</button><button class="btn secondary" onclick="changeEvidenceStatus('${latest?._id}','update_requested')">Request update</button>` : ''}
+            ${roleName() === 'Management' && ['supervisor_approved','manager_review'].includes(task.status) ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Manager approve</button><button class="btn secondary" onclick="changeEvidenceStatus('${latest?._id}','returned')">Not approved</button>` : ''}
+            ${roleName() !== 'Keeper' ? `<button class="btn secondary" onclick="alert('Mention chat will be the next backend step.')">@ Escalate</button>` : ''}
+          </div>
+        </div>`;
+      }
+      return `<div class="evidence-box"><div class="muted">No actions available for this role.</div></div>`;
+    }
+    function renderFiles(latest){
+      if(!latest || !latest.files || latest.files.length === 0) return '<div class="muted">No uploaded files yet.</div>';
+      return `<div class="file-list">${latest.files.map((file) => {
+        const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
+        return `<a class="file-chip" href="${url}" target="_blank"><b>${file.fileType}</b>${file.fileName}</a>`;
+      }).join('')}</div>`;
+    }
+    async function saveEvidence(taskId, submitNow){
+      const form = new FormData();
+      form.append('task', taskId);
+      form.append('note', qs(`note-${taskId}`).value);
+      form.append('submitNow', submitNow ? 'true' : 'false');
+      Array.from(qs(`files-${taskId}`).files).forEach((file) => form.append('files', file));
+      await fetch(`${API_BASE}/evidence`, { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body:form })
+        .then(async (res) => { if(!res.ok) throw new Error((await res.json()).message); });
+      await loadAll();
+      render();
+    }
+    async function changeEvidenceStatus(evidenceId, status){
+      if(!evidenceId) return alert('No evidence record found for this task yet.');
+      const relatedTask = evidence.find((item) => item._id === evidenceId)?.task;
+      const comment = relatedTask ? qs(`comment-${relatedTask._id}`)?.value : '';
+      await api(`/evidence/${evidenceId}/status`, { method:'PATCH', body:JSON.stringify({ status, comment }) });
+      await loadAll();
+      render();
+    }
+
+    function profileInitials(){
+      return (currentUser?.fullName || currentUser?.email || 'User')
+        .split(/[ @.]+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+    }
+
+    function renderProfile(){
+      const permissions = userPermissions();
+      const rolePermissions = currentUser?.role?.permissions || [];
+      qs('main').innerHTML = `
+        <div class="topbar">
+          <div>
+            <h1>My Profile</h1>
+            <div class="muted">Your ZooOps account details and permissions.</div>
+          </div>
+          <span class="tag green">${roleName() || 'User'} view</span>
+        </div>
+        <div class="card">
+          <div class="profile-head">
+            <div class="avatar">${profileInitials()}</div>
+            <div>
+              <h2 style="margin:0">${currentUser?.fullName || 'No name added'}</h2>
+              <div class="muted">${currentUser?.jobTitle || 'No job title added'}</div>
+            </div>
+          </div>
+          <div class="grid g2" style="margin-top:18px">
+            <div class="info"><b>Full name</b><span>${currentUser?.fullName || '-'}</span></div>
+            <div class="info"><b>Email address</b><span>${currentUser?.email || '-'}</span></div>
+            <div class="info"><b>Role</b><span>${roleName() || '-'}</span></div>
+            <div class="info"><b>Account status</b><span>${currentUser?.active ? 'Active' : 'Inactive'}</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Permissions</div>
+          ${permissions.length
+            ? `<div class="file-list">${permissions.map((permission) => `<span class="tag blue">${permission}</span>`).join('')}</div>`
+            : '<div class="muted">No permissions assigned yet.</div>'}
+          ${rolePermissions.length
+            ? `<div class="muted" style="margin-top:12px">These permissions come from your role and any extra access given during invitation.</div>`
+            : ''}
+        </div>
+      `;
+    }
+
+    function renderCreateTask(){
+      if(!canCreateTask()){
+        qs('main').innerHTML = '<div class="card">You do not have permission to create tasks.</div>';
+        return;
+      }
+      qs('main').innerHTML = `
+        <div class="topbar"><div><h1>Create keeper task</h1><div class="muted">Create and assign a task to a keeper.</div></div></div>
+        <div class="card">
+          <div class="grid g2">
+            <div class="field"><div class="label">Task title</div><input class="input" id="new-title"></div>
+            <div class="field"><div class="label">Task type</div><select class="select" id="new-type">${['feeding','cleaning','medical','observation','safety','water','evidence','other'].map(x=>`<option>${x}</option>`)}</select></div>
+            <div class="field"><div class="label">Date</div><input class="input" type="date" id="new-date"></div>
+            <div class="field"><div class="label">Due time</div><input class="input" type="time" id="new-time"></div>
+            <div class="field"><div class="label">Zone</div><select class="select" id="new-zone" onchange="refreshDependentOptions()"><option value="">Select zone</option>${options.zones.map(z=>`<option value="${z._id}">${z.name}</option>`)}</select></div>
+            <div class="field"><div class="label">Enclosure</div><select class="select" id="new-enclosure"></select></div>
+            <div class="field"><div class="label">Animal</div><select class="select" id="new-animal"></select></div>
+            <div class="field"><div class="label">Keeper</div><select class="select" id="new-keeper">${options.keepers.map(k=>`<option value="${k._id}">${k.fullName}</option>`)}</select></div>
+            <div class="field"><div class="label">Priority</div><select class="select" id="new-priority"><option>normal</option><option>warning</option><option>urgent</option></select></div>
+            <div class="field"><div class="label">Feed / item</div><input class="input" id="new-feed"></div>
+          </div>
+          <div class="field"><div class="label">Instructions</div><textarea class="textarea" id="new-description"></textarea></div>
+          <div class="row"><button class="btn primary" onclick="createTask()">Create and assign task</button><span class="muted" id="create-message"></span></div>
+        </div>`;
+      refreshDependentOptions();
+    }
+    function refreshDependentOptions(){
+      const zoneId = qs('new-zone')?.value;
+      if(!zoneId){
+        qs('new-enclosure').innerHTML = '<option value="">Select zone first</option>';
+        qs('new-animal').innerHTML = '<option value="">No specific animal</option>' + (options.animals || []).map((a) => {
+          const enclosureName = a.enclosure?.name ? ` - ${a.enclosure.name}` : '';
+          return `<option value="${a._id}">${a.name} - ${a.species}${enclosureName}</option>`;
+        }).join('');
+        qs('new-enclosure').onchange = refreshDependentOptions;
+        return;
+      }
+      const enclosures = options.enclosures.filter((e) => (e.zone?._id || e.zone) === zoneId);
+      qs('new-enclosure').innerHTML = '<option value="">Select enclosure</option>' + enclosures.map((e) => `<option value="${e._id}">${e.name}</option>`).join('');
+      const animals = options.animals || [];
+      qs('new-animal').innerHTML = '<option value="">No specific animal</option>' + animals.map((a) => {
+        const enclosureName = a.enclosure?.name ? ` - ${a.enclosure.name}` : '';
+        return `<option value="${a._id}">${a.name} - ${a.species}${enclosureName}</option>`;
+      }).join('');
+      qs('new-enclosure').onchange = refreshDependentOptions;
+    }
+    async function createTask(){
+      const payload = {
+        title: qs('new-title').value,
+        description: qs('new-description').value,
+        taskType: qs('new-type').value,
+        priority: qs('new-priority').value,
+        dueDate: qs('new-date').value,
+        dueTime: qs('new-time').value,
+        zone: qs('new-zone').value,
+        enclosure: qs('new-enclosure').value,
+        animal: qs('new-animal').value || undefined,
+        assignedTo: qs('new-keeper').value,
+        feedItem: qs('new-feed').value,
+        evidenceRequired: true
+      };
+      if(!payload.title || !payload.dueDate || !payload.dueTime || !payload.zone || !payload.enclosure || !payload.assignedTo){
+        qs('create-message').textContent = 'Please complete the required task details.';
+        return;
+      }
+      const data = await api('/tasks', { method:'POST', body:JSON.stringify(payload) });
+      qs('create-message').textContent = data.message;
+      await loadAll();
+    }
+    function renderInviteUsers(){
+      if(!canInviteUsers()){
+        qs('main').innerHTML = '<div class="card">You do not have permission to invite users.</div>';
+        return;
+      }
+      const extraPermissionOptions = [
+        'tasks.create',
+        'tasks.update',
+        'evidence.read',
+        'evidence.create',
+        'evidence.approve',
+        'evidence.return',
+        'users.create',
+        'users.manage',
+        'reports.read',
+        'calendar.manage'
+      ];
+      qs('main').innerHTML = `
+        <div class="topbar">
+          <div><h1>Invite users</h1><div class="muted">Invite a person by email and choose what they can access.</div></div>
+          <span class="tag green">Invite permission</span>
+        </div>
+        <div class="card">
+          <div class="grid g2">
+            <div class="field"><div class="label">Email address</div><input class="input" id="invite-email" type="email"></div>
+            <div class="field"><div class="label">Full name</div><input class="input" id="invite-name"></div>
+            <div class="field"><div class="label">Job title</div><input class="input" id="invite-title"></div>
+            <div class="field"><div class="label">Role</div><select class="select" id="invite-role" onchange="renderInvitePermissionPreview()">
+              <option value="">Select role</option>
+              ${(options.roles || []).map((role) => `<option value="${role._id}">${role.name}</option>`).join('')}
+            </select></div>
+          </div>
+          <div class="field">
+            <div class="label">Default role permissions</div>
+            <div class="grid g3" id="role-permission-preview">
+              <div class="muted">Select a role to see its default permissions.</div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="label">Extra permissions</div>
+            <div class="muted" style="margin-bottom:10px">Use these only when this person needs more access than the selected role normally has.</div>
+            <div class="grid g3">
+              ${extraPermissionOptions.map((value) => `
+                <label class="info"><input type="checkbox" class="invite-permission" value="${value}"> ${permissionLabel(value)}</label>
+              `).join('')}
+            </div>
+          </div>
+          <div class="row"><button class="btn primary" onclick="sendInvitation()">Invite user</button><span class="muted" id="invite-message"></span></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Invitations</div>
+          ${invitations.length ? invitations.map((invite) => `
+            <div class="task" style="grid-template-columns:1fr 280px">
+              <div>
+                <div class="task-title">${invite.fullName}</div>
+                <div class="meta">${invite.email} - ${invite.jobTitle || 'No title'}</div>
+                <div class="info-grid">
+                  <div class="info"><b>Role</b><span>${invite.role?.name || '-'}</span></div>
+                  <div class="info"><b>Status</b><span>${invite.status}</span></div>
+                  <div class="info"><b>Email</b><span>${invite.emailStatus}</span></div>
+                </div>
+                ${invite.emailError ? `<div class="info" style="margin-top:10px"><b>Email note</b><span>${invite.emailError}</span></div>` : ''}
+              </div>
+              <div class="evidence-box">
+                <b>Invite link</b>
+                <div class="muted" style="word-break:break-all">${location.origin}/App3.html?invite=${invite.token || 'hidden-after-refresh'}</div>
+              </div>
+            </div>
+          `).join('') : '<div class="muted">No invitations yet.</div>'}
+        </div>`;
+      renderInvitePermissionPreview();
+    }
+    function renderInvitePermissionPreview(){
+      const roleId = qs('invite-role')?.value;
+      const role = (options.roles || []).find((item) => item._id === roleId);
+      const defaults = rolePermissionValues(role);
+      const defaultSet = new Set(defaults);
+      const preview = qs('role-permission-preview');
+      if(preview){
+        preview.innerHTML = defaults.length
+          ? defaults.map((value) => `<label class="info"><input type="checkbox" checked disabled> ${permissionLabel(value)}</label>`).join('')
+          : '<div class="muted">Select a role to see its default permissions.</div>';
+      }
+      document.querySelectorAll('.invite-permission').forEach((checkbox) => {
+        if(defaultSet.has(checkbox.value)){
+          checkbox.checked = true;
+          checkbox.disabled = true;
+          checkbox.dataset.roleDefault = 'true';
+          checkbox.closest('.info')?.classList.add('muted');
+        }else{
+          if(checkbox.dataset.roleDefault === 'true') checkbox.checked = false;
+          checkbox.disabled = false;
+          checkbox.dataset.roleDefault = 'false';
+          checkbox.closest('.info')?.classList.remove('muted');
+        }
+      });
+    }
+    async function sendInvitation(){
+      qs('invite-message').textContent = '';
+      const permissions = [...document.querySelectorAll('.invite-permission:checked:not(:disabled)')].map((item) => item.value);
+      const payload = {
+        email: qs('invite-email').value,
+        fullName: qs('invite-name').value,
+        jobTitle: qs('invite-title').value,
+        role: qs('invite-role').value,
+        permissions
+      };
+      if(!payload.email || !payload.fullName || !payload.role){
+        qs('invite-message').textContent = 'Email, full name, and role are required.';
+        return;
+      }
+      try{
+        const data = await api('/invitations', { method:'POST', body:JSON.stringify(payload) });
+        qs('invite-message').textContent = `${data.message} Link: ${data.inviteLink}`;
+        await loadAll();
+        renderInviteUsers();
+      }catch(err){
+        qs('invite-message').textContent = err.message;
+      }
+    }
+    function renderReview(){
+      qs('main').innerHTML = `
+        <div class="topbar"><div><h1>Evidence review</h1><div class="muted">Review submitted keeper evidence and approval status.</div></div></div>
+        <div class="card">
+          ${evidence.length ? evidence.map((ev) => `<div class="task">
+            <div>
+              <div class="task-title">${ev.task?.title || 'Evidence'}</div>
+              <div class="meta">Keeper: ${ev.submittedBy?.fullName || '-'} - ${fmtDate(ev.submittedAt || ev.updatedAt)}</div>
+              <div class="info-grid">
+                <div class="info"><b>Status</b><span>${ev.status}</span></div>
+                <div class="info"><b>Zone</b><span>${ev.task?.zone?.name || '-'}</span></div>
+                <div class="info"><b>Enclosure</b><span>${ev.task?.enclosure?.name || '-'}</span></div>
+              </div>
+              <div class="info" style="margin-top:10px"><b>Note</b><span>${ev.note || '-'}</span></div>
+            </div>
+            <div class="evidence-box">${renderFiles(ev)}</div>
+          </div>`).join('') : '<div class="muted">No evidence submitted yet.</div>'}
+        </div>`;
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteTokenFromUrl = urlParams.get('invite');
+    const oauthTokenFromUrl = urlParams.get('oauthToken');
+    const oauthErrorFromUrl = urlParams.get('oauthError');
+    if(oauthErrorFromUrl){
+      qs('login-error').textContent = oauthErrorFromUrl;
+      history.replaceState({}, '', 'App3.html');
+    } else if(oauthTokenFromUrl){
+      finishOAuthLogin(oauthTokenFromUrl);
+    } else if(inviteTokenFromUrl && !token){
+      showInviteRegistration(inviteTokenFromUrl);
+    } else if(token && currentUser) {
+      startApp();
+    }
+  </script>
+</body>
+</html>
+
+

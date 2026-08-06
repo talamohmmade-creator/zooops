@@ -5,7 +5,7 @@ const evidenceController = require('../controllers/evidenceController');
 const upload = require('../middleware/uploadMiddleware');
 const { protect } = require('../middleware/authMiddleware');
 
-router.get('/', protect, evidenceController.getEvidence);
+router.get('/', protect, evidenceController.listEvidence);
 
 router.post(
   '/',

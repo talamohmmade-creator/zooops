@@ -1,22 +1,29 @@
 const express = require('express');
+const evidenceController = require('../controllers/evidenceController');
+const requireAuth = require('../middleware/authMiddleware');
+const { requirePermission } = require('../middleware/permissionMiddleware');
+const { uploadEvidenceFiles } = require('../middleware/uploadMiddleware');
+
 const router = express.Router();
 
-const evidenceController = require('../controllers/evidenceController');
-const upload = require('../middleware/uploadMiddleware');
-const { protect } = require('../middleware/authMiddleware');
-
-router.get('/', protect, evidenceController.listEvidence);
+router.get(
+  '/',
+  requireAuth,
+  requirePermission('evidence', 'read'),
+  evidenceController.getEvidence
+);
 
 router.post(
   '/',
-  protect,
-  upload.array('files', 10),
+  requireAuth,
+  requirePermission('evidence', 'create'),
+  uploadEvidenceFiles.array('files', 10),
   evidenceController.createEvidence
 );
 
 router.patch(
   '/:id/status',
-  protect,
+  requireAuth,
   evidenceController.updateEvidenceStatus
 );
 

@@ -101,6 +101,13 @@ MANAGER_EMAILS=your.manager.email@gmail.com
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_CALLBACK_URL=https://zooops.onrender.com/api/auth/google/callback
+INVITE_BASE_URL=https://zooops.onrender.com
+SMTP_HOST=your-mail-provider-host
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-sending-mailbox
+SMTP_PASS=your-smtp-password-or-app-password
+SMTP_FROM=ZooOps <your-sending-mailbox>
 ```
 
 In Google Cloud Console, add the exact `GOOGLE_CALLBACK_URL` above as an authorized

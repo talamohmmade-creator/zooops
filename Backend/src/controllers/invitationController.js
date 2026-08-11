@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const Invitation = require('../models/Invitation');
 const Role = require('../models/Role');
+const sendInvitationEmail = require('../utils/sendInvitationEmail');
 
 const hashToken = (value) => crypto.createHash('sha256').update(value).digest('hex');
 const mayInvite = (user) => ['Management', 'Admin'].includes(user.role?.name) || (user.role?.permissions || []).some((p) => p.resource === 'users' && p.actions.some((a) => ['create', 'manage'].includes(a)));
@@ -19,9 +20,16 @@ async function createInvitation(req, res) {
   await Invitation.updateMany({ email, status: 'pending' }, { status: 'revoked' });
   const rawToken = crypto.randomBytes(32).toString('hex');
   const invitation = await Invitation.create({ email, fullName: req.body.fullName, jobTitle: req.body.jobTitle, role: role._id, customPermissions: req.body.permissions || [], tokenHash: hashToken(rawToken), invitedBy: req.user._id, expiresAt: new Date(Date.now() + 7 * 864e5) });
-  const base = (process.env.CLIENT_URL || process.env.PUBLIC_URL || '').replace(/\/$/, '');
+  const base = (process.env.INVITE_BASE_URL || process.env.PUBLIC_URL || process.env.CLIENT_URL || '').replace(/\/$/, '');
   const inviteLink = `${base}/App3.html?invite=${rawToken}`;
-  res.status(201).json({ message: 'Invitation created. Share the secure link with the invited person.', invitation: { ...invitation.toObject(), role }, inviteLink });
+  try {
+    await sendInvitationEmail({ to: email, fullName: invitation.fullName, roleName: role.name, inviteLink, invitedBy: req.user.fullName });
+    invitation.emailStatus = 'sent'; invitation.emailError = undefined; await invitation.save();
+    res.status(201).json({ message: `Invitation email sent to ${email}.`, invitation: { ...invitation.toObject(), role }, inviteLink });
+  } catch (error) {
+    invitation.emailStatus = 'failed'; invitation.emailError = error.message; await invitation.save();
+    res.status(502).json({ message: `Invitation was created, but email delivery failed: ${error.message}`, inviteLink });
+  }
 }
 
 async function verifyInvitation(req, res) {

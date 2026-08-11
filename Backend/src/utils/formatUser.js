@@ -14,7 +14,8 @@ function formatUser(user) {
         }
       : null,
     assignedZones: user.assignedZones || [],
-    assignedEnclosures: user.assignedEnclosures || []
+    assignedEnclosures: user.assignedEnclosures || [],
+    customPermissions: user.customPermissions || []
   };
 }
 

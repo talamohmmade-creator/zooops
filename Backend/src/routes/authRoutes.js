@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   login,
+  setupManager,
   registerFromInvite,
   googleStart,
   googleCallback,
@@ -13,6 +14,7 @@ const { requirePermission } = require('../middleware/permissionMiddleware');
 const router = express.Router();
 
 router.post('/login', login);
+router.post('/setup-manager', setupManager);
 router.post('/register-from-invite', registerFromInvite);
 router.get('/google', googleStart);
 router.get('/google/callback', googleCallback);

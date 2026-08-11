@@ -16,7 +16,12 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: true
+      default: null
+    },
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true
     },
     role: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,10 +36,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
-    customPermissions: {
-      type: [String],
-      default: []
-    },
     assignedZones: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -46,7 +47,8 @@ const userSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Enclosure'
       }
-    ]
+    ],
+    customPermissions: { type: [String], default: [] }
   },
   { timestamps: true }
 );

@@ -78,6 +78,8 @@
       <div class="field"><div class="label">Email address</div><input class="input" id="login-email" autocomplete="off"></div>
       <div class="field"><div class="label">Password</div><input class="input" id="login-password" type="password" autocomplete="new-password"></div>
       <button class="btn primary" style="width:100%" onclick="login()">Sign in</button>
+      <button class="btn secondary" style="width:100%;margin-top:10px" onclick="showManagerSetup()">Set up manager account</button>
+      <div class="muted" style="margin-top:14px;text-align:center;font-size:13px;line-height:1.5">Managers use the setup button once. Other team members must open the invitation link sent by their manager. Your role and windows are selected automatically after sign-in.</div>
       <div class="error" id="login-error"></div>
     </div>
   </section>
@@ -102,9 +104,9 @@
   </section>
 
   <script>
-    const BACKEND_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:5000'
-  : 'https://YOUR-RENDER-BACKEND-URL.onrender.com';
+    const BACKEND_URL = (location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port !== '5000'
+      ? 'https://zooops.onrender.com'
+      : window.location.origin;
 
     const API_BASE = `${BACKEND_URL}/api`;
     const UPLOAD_BASE = BACKEND_URL;
@@ -281,7 +283,27 @@ async function completeInviteRegistration(event) {
       }catch(err){ qs('login-error').textContent = err.message; }
     }
     function loginWithGoogle(){
-      window.location.href = `${API_BASE}/auth/google`;
+      const suffix = inviteToken ? `?invite=${encodeURIComponent(inviteToken)}` : '';
+      window.location.href = `${API_BASE}/auth/google${suffix}`;
+    }
+    function showManagerSetup(){
+      qs('login-card').innerHTML = `
+        <div class="brand"><div class="badge">WZC</div><div><div class="brand-title">Set up manager</div><div class="muted">Use any email address you control</div></div></div>
+        <div class="field"><div class="label">Full name</div><input class="input" id="setup-name"></div>
+        <div class="field"><div class="label">Email address</div><input class="input" id="setup-email" type="email"></div>
+        <div class="field"><div class="label">Password (8+ characters)</div><input class="input" id="setup-password" type="password"></div>
+        <button class="btn primary" style="width:100%" onclick="setupManager()">Create manager account</button>
+        <button class="btn secondary" style="width:100%;margin-top:10px" onclick="location.reload()">Back to sign in</button>
+        <div class="error" id="login-error"></div>`;
+    }
+    async function setupManager(){
+      qs('login-error').textContent = '';
+      try{
+        const data = await api('/auth/setup-manager', { method:'POST', body:JSON.stringify({ fullName:qs('setup-name').value, email:qs('setup-email').value, password:qs('setup-password').value }) });
+        token = data.token; currentUser = data.user;
+        localStorage.setItem('zooops_token', token); localStorage.setItem('zooops_user', JSON.stringify(currentUser));
+        await startApp();
+      }catch(err){ qs('login-error').textContent = err.message; }
     }
     async function showInviteRegistration(inviteToken){
       qs('login-card').innerHTML = `
@@ -293,6 +315,7 @@ async function completeInviteRegistration(event) {
         <div class="field"><div class="label">Create password</div><input class="input" id="invite-password" type="password"></div>
         <div class="field"><div class="label">Confirm password</div><input class="input" id="invite-password-confirm" type="password"></div>
         <button class="btn primary" style="width:100%" onclick="registerFromInvite('${inviteToken}')">Create account</button>
+        <button class="oauth-btn" style="width:100%;margin-top:10px" onclick="loginWithGoogle()">Continue with Google</button>
         <button class="btn secondary" style="width:100%;margin-top:10px" onclick="location.href='App3.html'">Back to sign in</button>
         <div class="error" id="invite-error"></div>`;
       try{
@@ -750,11 +773,6 @@ async function completeInviteRegistration(event) {
     } else if(token && currentUser) {
       startApp();
     }
-    if (inviteToken) {
-  showInviteRegisterScreen();
-}
   </script>
 </body>
 </html>
-
-

@@ -24,7 +24,6 @@ const rolePermissions = {
     { resource: 'calendar', actions: ['read'] },
     { resource: 'animals', actions: ['read'] }
   ],
-
   Supervisor: [
     { resource: 'tasks', actions: ['create', 'read', 'update', 'assign'] },
     { resource: 'evidence', actions: ['read', 'approve', 'return', 'escalate'] },
@@ -34,18 +33,15 @@ const rolePermissions = {
     { resource: 'animals', actions: ['read', 'update'] },
     { resource: 'ai', actions: ['read'] }
   ],
-
   Management: [
-    { resource: 'tasks', actions: ['create', 'read', 'update', 'assign'] },
+    { resource: 'tasks', actions: ['read', 'update'] },
     { resource: 'evidence', actions: ['read', 'approve', 'return'] },
     { resource: 'comments', actions: ['create', 'read', 'update'] },
     { resource: 'mentions', actions: ['create', 'read', 'update'] },
     { resource: 'calendar', actions: ['create', 'read', 'update'] },
-    { resource: 'animals', actions: ['read', 'update'] },
     { resource: 'reports', actions: ['read', 'manage'] },
     { resource: 'ai', actions: ['read'] }
   ],
-
   Admin: [
     { resource: 'users', actions: ['create', 'read', 'update', 'delete', 'manage'] },
     { resource: 'roles', actions: ['create', 'read', 'update', 'delete', 'manage'] },

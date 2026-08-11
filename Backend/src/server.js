@@ -15,41 +15,31 @@ const invitationRoutes = require('./routes/invitationRoutes');
 
 const app = express();
 
+const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '').split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean);
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin(origin, callback) {
+    if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin.replace(/\/$/, ''))) return callback(null, true);
+    callback(new Error('Origin is not allowed by CORS.'));
+  },
   credentials: true
 }));
-
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
-
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
-// This serves App3.html from Backend/public
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/evidence', evidenceRoutes);
 app.use('/api/invitations', invitationRoutes);
 
+app.use(express.static(path.join(__dirname, '..', 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'App3.html')));
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     message: 'ZooOps backend is running'
   });
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'App3.html'));
-});
-
-app.get('/App3.html', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'App3.html'));
-});
-
-app.get('/App3', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'App3.html'));
 });
 
 const port = process.env.PORT || 5000;

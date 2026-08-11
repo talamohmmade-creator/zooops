@@ -100,10 +100,6 @@ const taskSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
-    evidenceRequired: {
-      type: Boolean,
-      default: true
-    },
     keeperNote: {
       type: String,
       trim: true

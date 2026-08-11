@@ -86,6 +86,27 @@ manager@zooops.local
 admin@zooops.local
 ```
 
+## Manager, invitations, and Google login
+
+The deployed app is served at `/App3.html`. A manager may create the first account from
+the **Set up manager account** button using any email address. If users already exist,
+add the manager's email to `MANAGER_EMAILS` in Render. Other users must join through an invitation.
+
+Set these Render environment variables:
+
+```env
+PUBLIC_URL=https://zooops.onrender.com
+CLIENT_URL=https://zooops.onrender.com
+MANAGER_EMAILS=your.manager.email@gmail.com
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=https://zooops.onrender.com/api/auth/google/callback
+```
+
+In Google Cloud Console, add the exact `GOOGLE_CALLBACK_URL` above as an authorized
+redirect URI. Existing or invited accounts may then use Google. A new Google account
+must arrive through its invitation link, and its Google email must match the invited email.
+
 ## Next backend step
 
 After this database setup, the next step is to build:

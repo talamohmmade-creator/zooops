@@ -1,4 +1,4 @@
-function hasRolePermission(user, resource, action) {
+function hasPermission(user, resource, action) {
   const permissions = user.role && user.role.permissions ? user.role.permissions : [];
 
   return permissions.some((permission) => {
@@ -7,15 +7,6 @@ function hasRolePermission(user, resource, action) {
     const hasAction = permission.actions.includes(action);
     return sameResource && (canManage || hasAction);
   });
-}
-
-function hasCustomPermission(user, resource, action) {
-  const customPermissions = Array.isArray(user.customPermissions) ? user.customPermissions : [];
-  return customPermissions.includes(`${resource}.manage`) || customPermissions.includes(`${resource}.${action}`);
-}
-
-function hasPermission(user, resource, action) {
-  return hasRolePermission(user, resource, action) || hasCustomPermission(user, resource, action);
 }
 
 function requirePermission(resource, action) {

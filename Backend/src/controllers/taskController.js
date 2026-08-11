@@ -1,6 +1,5 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
-const Role = require('../models/Role');
 const Zone = require('../models/Zone');
 const Enclosure = require('../models/Enclosure');
 const Animal = require('../models/Animal');
@@ -36,16 +35,19 @@ function buildTaskFilter(user, query) {
   if (query.zone) filter.zone = query.zone;
   if (query.enclosure) filter.enclosure = query.enclosure;
   if (query.assignedTo) filter.assignedTo = query.assignedTo;
-  if (query.date) filter.dueDate = dateRange(query.date);
 
+  if (query.date) {
+    const start = new Date(`${query.date}T00:00:00.000Z`);
+    const end = new Date(`${query.date}T23:59:59.999Z`);
+    filter.dueDate = { $gte: start, $lte: end };
+  }
+
+  // Keeper can only see tasks assigned to them
   if (roleName === 'Keeper') {
     filter.assignedTo = user._id;
   }
 
-  if (roleName === 'Management' && query.managerQueue === 'true') {
-    filter.status = { $in: ['supervisor_approved', 'manager_review', 'manager_returned', 'manager_approved'] };
-  }
-
+  // Supervisor, Management, and Admin can see all tasks
   return filter;
 }
 
@@ -71,7 +73,6 @@ async function getTaskById(req, res) {
 
 async function getTaskOptions(req, res) {
   const users = await User.find({ active: true }).populate('role').select('fullName email jobTitle role');
-  const roles = await Role.find({}).sort({ name: 1 });
   const zones = await Zone.find({}).sort({ name: 1 });
   const enclosures = await Enclosure.find({}).populate('zone', 'name').sort({ name: 1 });
   const animals = await Animal.find({ active: true }).populate('enclosure', 'name zone').sort({ name: 1 });
@@ -84,7 +85,6 @@ async function getTaskOptions(req, res) {
       jobTitle: user.jobTitle,
       role: user.role ? user.role.name : ''
     })),
-    roles,
     keepers: users
       .filter((user) => user.role && user.role.name === 'Keeper')
       .map((user) => ({ _id: user._id, fullName: user.fullName, email: user.email, jobTitle: user.jobTitle })),

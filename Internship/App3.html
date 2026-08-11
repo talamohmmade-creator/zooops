@@ -595,7 +595,7 @@ const ROLE_COLOR = {keeper:'var(--green)', supervisor:'var(--blue)', management:
 const ROLE_CHIP = {keeper:'chip-keeper', supervisor:'chip-supervisor', management:'chip-management', admin:'chip-admin'};
 
 /* ---------------- BACKEND CONNECTION ---------------- */
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 let authToken = localStorage.getItem('zooopsToken') || '';
 let currentUser = JSON.parse(localStorage.getItem('zooopsUser') || 'null');
 let backendTasksLoaded = false;

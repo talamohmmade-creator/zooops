@@ -1,0 +1,58 @@
+require('dotenv').config();
+
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const morgan = require('morgan');
+const connectDatabase = require('./config/database');
+const ensureDefaultRoles = require('./utils/ensureDefaultRoles');
+
+require('./models');
+
+const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
+const evidenceRoutes = require('./routes/evidenceRoutes');
+const invitationRoutes = require('./routes/invitationRoutes');
+
+const app = express();
+
+const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '').split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin.replace(/\/$/, ''))) return callback(null, true);
+    callback(new Error('Origin is not allowed by CORS.'));
+  },
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(morgan('dev'));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/evidence', evidenceRoutes);
+app.use('/api/invitations', invitationRoutes);
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'App3.html')));
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'ZooOps backend is running'
+  });
+});
+
+const port = process.env.PORT || 5000;
+
+connectDatabase()
+  .then(async () => {
+    await ensureDefaultRoles();
+    app.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to start backend:', error.message);
+    process.exit(1);
+  });

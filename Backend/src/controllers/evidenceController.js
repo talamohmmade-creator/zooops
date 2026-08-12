@@ -250,6 +250,10 @@ async function updateEvidenceStatus(req, res) {
     return res.status(400).json({ message: 'Invalid evidence status.' });
   }
 
+  if ((status === 'update_requested' || status === 'returned') && !String(comment || '').trim()) {
+    return res.status(400).json({ message: 'A comment is required when rejecting or returning evidence.' });
+  }
+
   if (status === 'approved' && !hasPermission(req.user, 'evidence', 'approve')) {
     return res.status(403).json({ message: 'You do not have permission to approve evidence.' });
   }

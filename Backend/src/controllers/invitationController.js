@@ -26,9 +26,9 @@ async function createInvitation(req, res) {
     if (!base) return res.status(500).json({ message: 'INVITE_BASE_URL is missing in Render.' });
     const inviteLink = `${base}/App3.html?invite=${rawToken}`;
     try {
-      await sendInvitationEmail({ to: email, fullName: invitation.fullName, roleName: role.name, inviteLink, invitedBy: req.user.fullName });
+      const mailResult = await sendInvitationEmail({ to: email, fullName: invitation.fullName, roleName: role.name, inviteLink, invitedBy: req.user.fullName });
       invitation.emailStatus = 'sent'; invitation.emailError = undefined; await invitation.save();
-      return res.status(201).json({ message: `Invitation email sent to ${email}.`, invitation: { ...invitation.toObject(), role }, inviteLink });
+      return res.status(201).json({ message: `Invitation accepted for delivery to ${email}.`, messageId: mailResult.messageId, invitation: { ...invitation.toObject(), role }, inviteLink });
     } catch (emailError) {
       invitation.emailStatus = 'failed'; invitation.emailError = emailError.message; await invitation.save();
       return res.status(502).json({ message: `Invitation created, but email failed: ${emailError.message}`, inviteLink });

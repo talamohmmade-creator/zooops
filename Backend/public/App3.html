@@ -54,9 +54,10 @@
     .file-chip{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;min-width:120px;font-size:13px}
     .file-chip b{display:block;color:var(--green)}.section-title{font-size:18px;font-weight:800;margin-bottom:12px}
     .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
+    .stat.active-filter{border:2px solid var(--green);background:#e8faf8;box-shadow:0 10px 22px rgba(22,166,160,.14)}
     .profile-head{display:flex;align-items:center;gap:16px}
     .avatar{width:74px;height:74px;border-radius:50%;background:#e8faf8;border:2px solid var(--green);display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--green)}
-    @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid{grid-template-columns:1fr}}
+    @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid,.main>.grid{grid-template-columns:1fr!important}}
   </style>
 </head>
 <body>
@@ -119,6 +120,7 @@
     let invitations = [];
     let latestInviteLink = null;
     let currentView = 'operations';
+    let taskFilter = 'all';
     const permissionLabels = {
       'tasks.read': 'View tasks',
       'tasks.create': 'Create tasks',
@@ -410,21 +412,34 @@ async function completeInviteRegistration(event) {
     }
     function renderOperations(){
       const total = tasks.length;
-      const done = tasks.filter((task) => ['supervisor_approved','manager_approved','completed'].includes(task.status)).length;
+      const approvedStatuses = ['supervisor_approved','manager_approved','completed'];
+      const rejectedStatuses = ['update_requested','manager_returned','cancelled'];
+      const approved = tasks.filter((task) => approvedStatuses.includes(task.status));
+      const rejected = tasks.filter((task) => rejectedStatuses.includes(task.status));
+      const pending = tasks.filter((task) => !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
+      const filteredTasks = taskFilter === 'approved' ? approved
+        : taskFilter === 'rejected' ? rejected
+        : taskFilter === 'pending' ? pending
+        : tasks;
       qs('main').innerHTML = `
         <div class="topbar">
           <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
           <span class="tag green">${roleName()} view</span>
         </div>
-        <div class="grid g3">
-          <div class="stat"><div class="stat-num">${total}</div><div class="muted">Tasks visible to you</div></div>
-          <div class="stat"><div class="stat-num">${done}</div><div class="muted">Approved / completed</div></div>
-          <div class="stat"><div class="stat-num">${evidence.length}</div><div class="muted">Evidence records</div></div>
+        <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+          <button class="stat ${taskFilter === 'all' ? 'active-filter' : ''}" onclick="setTaskFilter('all')" style="text-align:left;cursor:pointer"><div class="stat-num">${total}</div><div class="muted">All tasks</div></button>
+          <button class="stat ${taskFilter === 'pending' ? 'active-filter' : ''}" onclick="setTaskFilter('pending')" style="text-align:left;cursor:pointer"><div class="stat-num">${pending.length}</div><div class="muted">Pending review</div></button>
+          <button class="stat ${taskFilter === 'approved' ? 'active-filter' : ''}" onclick="setTaskFilter('approved')" style="text-align:left;cursor:pointer"><div class="stat-num">${approved.length}</div><div class="muted">Approved / completed</div></button>
+          <button class="stat ${taskFilter === 'rejected' ? 'active-filter' : ''}" onclick="setTaskFilter('rejected')" style="text-align:left;cursor:pointer"><div class="stat-num">${rejected.length}</div><div class="muted">Rejected / returned</div></button>
         </div>
         <div class="card">
-          <div class="section-title">Tasks</div>
-          ${tasks.length ? tasks.map(renderTask).join('') : '<div class="muted">No tasks found. Manager/Admin can create one from Create task.</div>'}
+          <div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>
+          ${filteredTasks.length ? filteredTasks.map(renderTask).join('') : '<div class="muted">No tasks in this category.</div>'}
         </div>`;
+    }
+    function setTaskFilter(filter){
+      taskFilter = filter;
+      renderOperations();
     }
     function renderTask(task){
       const ev = taskEvidence(task._id);

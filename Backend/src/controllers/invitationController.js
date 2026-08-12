@@ -13,22 +13,29 @@ async function listInvitations(req, res) {
 }
 
 async function createInvitation(req, res) {
-  if (!mayInvite(req.user)) return res.status(403).json({ message: 'You do not have permission to invite users.' });
-  const email = (req.body.email || '').toLowerCase().trim();
-  const role = await Role.findById(req.body.role);
-  if (!email || !req.body.fullName || !role) return res.status(400).json({ message: 'Email, full name, and a valid role are required.' });
-  await Invitation.updateMany({ email, status: 'pending' }, { status: 'revoked' });
-  const rawToken = crypto.randomBytes(32).toString('hex');
-  const invitation = await Invitation.create({ email, fullName: req.body.fullName, jobTitle: req.body.jobTitle, role: role._id, customPermissions: req.body.permissions || [], tokenHash: hashToken(rawToken), invitedBy: req.user._id, expiresAt: new Date(Date.now() + 7 * 864e5) });
-  const base = (process.env.INVITE_BASE_URL || process.env.PUBLIC_URL || process.env.CLIENT_URL || '').replace(/\/$/, '');
-  const inviteLink = `${base}/App3.html?invite=${rawToken}`;
   try {
-    await sendInvitationEmail({ to: email, fullName: invitation.fullName, roleName: role.name, inviteLink, invitedBy: req.user.fullName });
-    invitation.emailStatus = 'sent'; invitation.emailError = undefined; await invitation.save();
-    res.status(201).json({ message: `Invitation email sent to ${email}.`, invitation: { ...invitation.toObject(), role }, inviteLink });
+    if (!mayInvite(req.user)) return res.status(403).json({ message: 'You do not have permission to invite users.' });
+    const email = (req.body.email || '').toLowerCase().trim();
+    if (!email || !req.body.fullName || !req.body.role) return res.status(400).json({ message: 'Email, full name, and a role are required.' });
+    const role = await Role.findById(req.body.role);
+    if (!role) return res.status(400).json({ message: 'The selected role no longer exists. Refresh the page and select it again.' });
+    await Invitation.updateMany({ email, status: 'pending' }, { status: 'revoked' });
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const invitation = await Invitation.create({ email, fullName: req.body.fullName, jobTitle: req.body.jobTitle, role: role._id, customPermissions: req.body.permissions || [], tokenHash: hashToken(rawToken), invitedBy: req.user._id, expiresAt: new Date(Date.now() + 7 * 864e5) });
+    const base = (process.env.INVITE_BASE_URL || process.env.PUBLIC_URL || process.env.CLIENT_URL || '').replace(/\/$/, '');
+    if (!base) return res.status(500).json({ message: 'INVITE_BASE_URL is missing in Render.' });
+    const inviteLink = `${base}/App3.html?invite=${rawToken}`;
+    try {
+      await sendInvitationEmail({ to: email, fullName: invitation.fullName, roleName: role.name, inviteLink, invitedBy: req.user.fullName });
+      invitation.emailStatus = 'sent'; invitation.emailError = undefined; await invitation.save();
+      return res.status(201).json({ message: `Invitation email sent to ${email}.`, invitation: { ...invitation.toObject(), role }, inviteLink });
+    } catch (emailError) {
+      invitation.emailStatus = 'failed'; invitation.emailError = emailError.message; await invitation.save();
+      return res.status(502).json({ message: `Invitation created, but email failed: ${emailError.message}`, inviteLink });
+    }
   } catch (error) {
-    invitation.emailStatus = 'failed'; invitation.emailError = error.message; await invitation.save();
-    res.status(502).json({ message: `Invitation was created, but email delivery failed: ${error.message}`, inviteLink });
+    console.error('Create invitation failed:', error);
+    return res.status(500).json({ message: `Could not create invitation: ${error.message}` });
   }
 }
 

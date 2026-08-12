@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const connectDatabase = require('./config/database');
 const ensureDefaultRoles = require('./utils/ensureDefaultRoles');
 const migrateDatabase = require('./utils/migrateDatabase');
+const ensureDefaultLocations = require('./utils/ensureDefaultLocations');
 
 require('./models');
 
@@ -56,6 +57,7 @@ connectDatabase()
   .then(async () => {
     await migrateDatabase();
     await ensureDefaultRoles();
+    await ensureDefaultLocations();
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
     });

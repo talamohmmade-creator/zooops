@@ -104,7 +104,7 @@
   </section>
 
   <script>
-    const BACKEND_URL = (location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port !== '5000'
+    const BACKEND_URL = location.protocol === 'file:' || ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port !== '5000')
       ? 'https://zooops.onrender.com'
       : window.location.origin;
 
@@ -189,7 +189,7 @@
       if(!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
       const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
       const data = await res.json().catch(() => ({}));
-      if(!res.ok) throw new Error(data.message || 'Request failed');
+      if(!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
       return data;
     }
     function showInviteRegisterScreen() {

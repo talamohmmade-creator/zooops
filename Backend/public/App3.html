@@ -471,7 +471,7 @@ async function completeInviteRegistration(event) {
           <textarea class="textarea" id="comment-${task._id}" placeholder="Comment if returning or escalating"></textarea>
           <div class="row" style="margin-top:10px">
             ${roleName() === 'Supervisor' && task.status === 'submitted' ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Approve evidence</button><button class="btn secondary" onclick="changeEvidenceStatus('${latest?._id}','update_requested')">Request update</button>` : ''}
-            ${roleName() === 'Management' && ['supervisor_approved','manager_review'].includes(task.status) ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Manager approve</button><button class="btn secondary" onclick="changeEvidenceStatus('${latest?._id}','returned')">Not approved</button>` : ''}
+            ${['Management','Admin'].includes(roleName()) && ['submitted','supervisor_approved','manager_review','manager_returned'].includes(task.status) ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Approve task</button><button class="btn danger" onclick="changeEvidenceStatus('${latest?._id}','returned')">Reject / return</button>` : ''}
             ${roleName() !== 'Keeper' ? `<button class="btn secondary" onclick="alert('Mention chat will be the next backend step.')">@ Escalate</button>` : ''}
           </div>
         </div>`;
@@ -500,6 +500,9 @@ async function completeInviteRegistration(event) {
       if(!evidenceId) return alert('No evidence record found for this task yet.');
       const relatedTask = evidence.find((item) => item._id === evidenceId)?.task;
       const comment = relatedTask ? qs(`comment-${relatedTask._id}`)?.value : '';
+      if(['returned','update_requested'].includes(status) && !comment?.trim()){
+        return alert('Please write a comment explaining what the keeper needs to correct.');
+      }
       await api(`/evidence/${evidenceId}/status`, { method:'PATCH', body:JSON.stringify({ status, comment }) });
       await loadAll();
       render();

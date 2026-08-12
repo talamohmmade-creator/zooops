@@ -6,6 +6,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const connectDatabase = require('./config/database');
 const ensureDefaultRoles = require('./utils/ensureDefaultRoles');
+const migrateDatabase = require('./utils/migrateDatabase');
 
 require('./models');
 
@@ -53,6 +54,7 @@ const port = process.env.PORT || 5000;
 
 connectDatabase()
   .then(async () => {
+    await migrateDatabase();
     await ensureDefaultRoles();
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);

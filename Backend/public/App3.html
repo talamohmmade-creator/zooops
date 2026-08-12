@@ -117,6 +117,7 @@
     let tasks = [];
     let evidence = [];
     let invitations = [];
+    let latestInviteLink = null;
     let currentView = 'operations';
     const permissionLabels = {
       'tasks.read': 'View tasks',
@@ -685,7 +686,8 @@ async function completeInviteRegistration(event) {
               </div>
               <div class="evidence-box">
                 <b>Invite link</b>
-                <div class="muted" style="word-break:break-all">${location.origin}/App3.html?invite=${invite.token || 'hidden-after-refresh'}</div>
+                <div class="muted" style="word-break:break-all">${latestInviteLink?.id === invite._id ? latestInviteLink.url : 'Secure link hidden after refresh'}</div>
+                ${latestInviteLink?.id === invite._id ? `<button class="btn secondary" style="margin-top:10px" onclick="navigator.clipboard.writeText('${latestInviteLink.url}')">Copy invite link</button>` : ''}
               </div>
             </div>
           `).join('') : '<div class="muted">No invitations yet.</div>'}
@@ -733,9 +735,10 @@ async function completeInviteRegistration(event) {
       }
       try{
         const data = await api('/invitations', { method:'POST', body:JSON.stringify(payload) });
-        qs('invite-message').textContent = `${data.message} Link: ${data.inviteLink}`;
+        latestInviteLink = { id: data.invitation._id, url: data.inviteLink };
         await loadAll();
         renderInviteUsers();
+        qs('invite-message').textContent = data.message;
       }catch(err){
         qs('invite-message').textContent = err.message;
       }

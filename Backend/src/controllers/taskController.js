@@ -64,7 +64,7 @@ async function getTaskOptions(req, res) {
   const [keepers, users, roles, zones, enclosures, animals] = await Promise.all([
     User.find({ active: true }).populate({ path: 'role', match: { name: 'Keeper' } }).select('fullName email role'),
     User.find({ active: true }).populate('role').select('fullName email role'),
-    Role.find().sort({ name: 1 }), Zone.find().sort({ name: 1 }), Enclosure.find().sort({ name: 1 }), Animal.find().sort({ name: 1 })
+    Role.find().sort({ name: 1 }), Zone.find().sort({ name: 1 }), Enclosure.find().populate('zone').sort({ name: 1 }), Animal.find({ active: true }).populate('enclosure').sort({ name: 1 })
   ]);
   res.json({ keepers: keepers.filter((user) => user.role), users, roles, zones, enclosures, animals });
 }

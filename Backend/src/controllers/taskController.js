@@ -1,6 +1,7 @@
 const Task = require('../models/Task');
 const { User, Role, Zone, Enclosure, Animal } = require('../models');
 const ensureDefaultRoles = require('../utils/ensureDefaultRoles');
+const ensureDefaultLocations = require('../utils/ensureDefaultLocations');
 
 const taskPopulate = [
   { path: 'assignedTo', select: 'fullName email jobTitle' },
@@ -59,6 +60,7 @@ async function getTaskOptions(req, res) {
   // Guarantee that the invite dropdown always has every system role, even when
   // an older production database originally contained only Management.
   await ensureDefaultRoles();
+  await ensureDefaultLocations();
   const [keepers, users, roles, zones, enclosures, animals] = await Promise.all([
     User.find({ active: true }).populate({ path: 'role', match: { name: 'Keeper' } }).select('fullName email role'),
     User.find({ active: true }).populate('role').select('fullName email role'),

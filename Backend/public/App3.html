@@ -567,7 +567,7 @@ async function completeInviteRegistration(event) {
             <div class="field"><div class="label">Date</div><input class="input" type="date" id="new-date"></div>
             <div class="field"><div class="label">Due time</div><input class="input" type="time" id="new-time"></div>
             <div class="field"><div class="label">Zone</div><select class="select" id="new-zone" onchange="refreshDependentOptions()"><option value="">Select zone</option>${options.zones.map(z=>`<option value="${z._id}">${z.name}</option>`)}</select></div>
-            <div class="field"><div class="label">Enclosure</div><select class="select" id="new-enclosure"></select></div>
+            <div class="field"><div class="label">Enclosure</div><select class="select" id="new-enclosure" onchange="refreshAnimalOptions()"></select></div>
             <div class="field"><div class="label">Animal</div><select class="select" id="new-animal"></select></div>
             <div class="field"><div class="label">Keeper</div><select class="select" id="new-keeper">${options.keepers.map(k=>`<option value="${k._id}">${k.fullName}</option>`)}</select></div>
             <div class="field"><div class="label">Priority</div><select class="select" id="new-priority"><option>normal</option><option>warning</option><option>urgent</option></select></div>
@@ -586,17 +586,19 @@ async function completeInviteRegistration(event) {
           const enclosureName = a.enclosure?.name ? ` - ${a.enclosure.name}` : '';
           return `<option value="${a._id}">${a.name} - ${a.species}${enclosureName}</option>`;
         }).join('');
-        qs('new-enclosure').onchange = refreshDependentOptions;
         return;
       }
       const enclosures = options.enclosures.filter((e) => (e.zone?._id || e.zone) === zoneId);
       qs('new-enclosure').innerHTML = '<option value="">Select enclosure</option>' + enclosures.map((e) => `<option value="${e._id}">${e.name}</option>`).join('');
-      const animals = options.animals || [];
+      refreshAnimalOptions();
+    }
+    function refreshAnimalOptions(){
+      const enclosureId = qs('new-enclosure')?.value;
+      const animals = (options.animals || []).filter((a) => !enclosureId || (a.enclosure?._id || a.enclosure) === enclosureId);
       qs('new-animal').innerHTML = '<option value="">No specific animal</option>' + animals.map((a) => {
         const enclosureName = a.enclosure?.name ? ` - ${a.enclosure.name}` : '';
         return `<option value="${a._id}">${a.name} - ${a.species}${enclosureName}</option>`;
       }).join('');
-      qs('new-enclosure').onchange = refreshDependentOptions;
     }
     async function createTask(){
       const payload = {

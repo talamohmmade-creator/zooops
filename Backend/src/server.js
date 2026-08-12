@@ -43,6 +43,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.use((error, req, res, next) => {
+  console.error('Unhandled request error:', error);
+  if (res.headersSent) return next(error);
+  res.status(500).json({ message: error.message || 'Unexpected server error.' });
+});
+
 const port = process.env.PORT || 5000;
 
 connectDatabase()

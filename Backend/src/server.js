@@ -5,6 +5,7 @@ const path = require('path');
 const cors = require('cors');
 const morgan = require('morgan');
 const connectDatabase = require('./config/database');
+const ensureDefaultRoles = require('./utils/ensureDefaultRoles');
 
 require('./models');
 
@@ -45,7 +46,8 @@ app.get('/api/health', (req, res) => {
 const port = process.env.PORT || 5000;
 
 connectDatabase()
-  .then(() => {
+  .then(async () => {
+    await ensureDefaultRoles();
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
     });

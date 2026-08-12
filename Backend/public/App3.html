@@ -121,6 +121,7 @@
     let latestInviteLink = null;
     let currentView = 'operations';
     let taskFilter = 'all';
+    let selectedTaskDate = localDateKey(new Date());
     const permissionLabels = {
       'tasks.read': 'View tasks',
       'tasks.create': 'Create tasks',
@@ -171,6 +172,17 @@
     }
     function qs(id){ return document.getElementById(id); }
     function fmtDate(value){ return value ? new Date(value).toLocaleString([], { dateStyle:'medium', timeStyle:'short' }) : '-'; }
+    function localDateKey(value){
+      const date = new Date(value);
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+    }
+    function selectedDateLabel(){
+      const date = new Date(`${selectedTaskDate}T12:00:00`);
+      const today = localDateKey(new Date());
+      const label = date.toLocaleDateString([], { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      return selectedTaskDate === today ? `Today - ${label}` : label;
+    }
     function statusLabel(status){
       const labels = {
         assigned:'Assigned', draft:'Draft', submitted:'Pending review',
@@ -411,20 +423,34 @@ async function completeInviteRegistration(event) {
       return evidence.filter((item) => item.task && item.task._id === taskId);
     }
     function renderOperations(){
-      const total = tasks.length;
+      const dateTasks = tasks.filter((task) => task.dueDate && localDateKey(task.dueDate) === selectedTaskDate);
+      const total = dateTasks.length;
       const approvedStatuses = ['supervisor_approved','manager_approved','completed'];
       const rejectedStatuses = ['update_requested','manager_returned','cancelled'];
-      const approved = tasks.filter((task) => approvedStatuses.includes(task.status));
-      const rejected = tasks.filter((task) => rejectedStatuses.includes(task.status));
-      const pending = tasks.filter((task) => !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
+      const approved = dateTasks.filter((task) => approvedStatuses.includes(task.status));
+      const rejected = dateTasks.filter((task) => rejectedStatuses.includes(task.status));
+      const pending = dateTasks.filter((task) => !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
       const filteredTasks = taskFilter === 'approved' ? approved
         : taskFilter === 'rejected' ? rejected
         : taskFilter === 'pending' ? pending
-        : tasks;
+        : dateTasks;
       qs('main').innerHTML = `
         <div class="topbar">
           <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
           <span class="tag green">${roleName()} view</span>
+        </div>
+        <div class="card" style="padding:14px 18px">
+          <div class="row space">
+            <div class="row">
+              <button class="btn secondary" onclick="moveTaskDate(-1)" title="Previous day">&#8592;</button>
+              <div style="min-width:260px;text-align:center"><b>${selectedDateLabel()}</b></div>
+              <button class="btn secondary" onclick="moveTaskDate(1)" title="Next day">&#8594;</button>
+            </div>
+            <div class="row">
+              <input class="input" style="width:auto" type="date" value="${selectedTaskDate}" onchange="selectTaskDate(this.value)">
+              <button class="btn secondary" onclick="goToToday()">Today</button>
+            </div>
+          </div>
         </div>
         <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
           <button class="stat ${taskFilter === 'all' ? 'active-filter' : ''}" onclick="setTaskFilter('all')" style="text-align:left;cursor:pointer"><div class="stat-num">${total}</div><div class="muted">All tasks</div></button>
@@ -434,11 +460,26 @@ async function completeInviteRegistration(event) {
         </div>
         <div class="card">
           <div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>
-          ${filteredTasks.length ? filteredTasks.map(renderTask).join('') : '<div class="muted">No tasks in this category.</div>'}
+          ${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks due on ${selectedDateLabel()}.</div>`}
         </div>`;
     }
     function setTaskFilter(filter){
       taskFilter = filter;
+      renderOperations();
+    }
+    function selectTaskDate(value){
+      if(!value) return;
+      selectedTaskDate = value;
+      renderOperations();
+    }
+    function moveTaskDate(days){
+      const date = new Date(`${selectedTaskDate}T12:00:00`);
+      date.setDate(date.getDate() + days);
+      selectedTaskDate = localDateKey(date);
+      renderOperations();
+    }
+    function goToToday(){
+      selectedTaskDate = localDateKey(new Date());
       renderOperations();
     }
     function renderTask(task){

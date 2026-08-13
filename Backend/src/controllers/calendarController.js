@@ -1,4 +1,5 @@
 const { CalendarReminder, Task } = require('../models');
+const { hasPermission } = require('../middleware/permissionMiddleware');
 
 function range(req) {
   const from = req.query.from ? new Date(req.query.from) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -22,6 +23,7 @@ async function getCalendar(req, res) {
 
 async function createReminder(req, res) {
   const role = req.user.role?.name;
+  if (!hasPermission(req.user, 'calendar', 'create')) return res.status(403).json({ message: 'Your manager has not enabled calendar task creation for your account.' });
   let assignedTo = req.body.assignedTo || req.user._id;
   if (!['Management', 'Admin', 'Supervisor'].includes(role)) assignedTo = req.user._id;
   if (!req.body.title || !req.body.startAt) return res.status(400).json({ message: 'Title, date, and time are required.' });

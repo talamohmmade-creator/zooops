@@ -62,6 +62,7 @@
     .delete-file{position:absolute;top:7px;right:7px;z-index:3;width:30px;height:30px;border:0;border-radius:50%;background:rgba(32,43,57,.88);color:#fff;font-size:20px;line-height:28px;cursor:pointer}
     .viewer{position:fixed;inset:0;z-index:1000;background:rgba(15,25,35,.88);display:grid;place-items:center;padding:30px}.viewer-card{width:min(1000px,94vw);height:min(760px,90vh);background:#fff;border-radius:16px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}.viewer-head,.viewer-foot{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}.viewer-body{background:#1c2733;display:grid;place-items:center;min-height:0}.viewer-body img,.viewer-body video{max-width:100%;max-height:100%;object-fit:contain}.viewer-body iframe{width:100%;height:100%;border:0;background:#fff}.viewer-close{font-size:25px}
     .upload-picker{margin:10px 0;padding:12px;border:2px dashed #bdd3df;border-radius:14px;background:#fff}.upload-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.upload-label{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:#e8faf8;color:var(--green);font-weight:800;cursor:pointer}.pending-files{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}.pending-file{position:relative;width:118px;height:118px;border:1px solid var(--border);border-radius:11px;background:#f5f8fb;overflow:hidden}.pending-preview{width:100%;height:78px;border:0;padding:0;background:#e8edf2;cursor:pointer;display:grid;place-items:center}.pending-preview img,.pending-preview video,.pending-preview iframe{width:100%;height:78px;object-fit:cover;border:0;pointer-events:none}.pending-file-icon{font-size:20px;font-weight:900;color:var(--green)}.pending-file-info{padding:6px 8px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pending-remove{position:absolute;right:4px;top:4px;z-index:2;width:23px;height:23px;border:0;border-radius:50%;background:#1f2d3d;color:#fff;font-size:17px;line-height:20px;cursor:pointer}
+    .task-chat{grid-column:1/-1;border-top:1px solid var(--border);padding-top:14px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;padding:5px}.chat-message{max-width:78%;padding:9px 12px;border-radius:12px;background:#fff;border:1px solid var(--border)}.chat-message.mine{align-self:flex-end;background:#e8faf8;border-color:#94dcd7}.chat-message .chat-meta{font-size:11px;color:var(--dim);margin-bottom:4px}.chat-message .mention{color:var(--blue);font-weight:800}.chat-compose{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}.chat-compose textarea{min-height:56px}
     .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
     .stat.active-filter{border:2px solid var(--green);background:#e8faf8;box-shadow:0 10px 22px rgba(22,166,160,.14)}
     .location-choice{text-align:left;cursor:pointer;color:var(--text);font:inherit;min-height:88px;transition:.15s ease}
@@ -131,6 +132,7 @@
     let options = { keepers: [], zones: [], enclosures: [], animals: [], users: [], roles: [] };
     let tasks = [];
     let evidence = [];
+    let taskComments = {};
     let invitations = [];
     let latestInviteLink = null;
     let currentView = 'operations';
@@ -443,6 +445,7 @@ async function completeInviteRegistration(event) {
       tasks = taskData.tasks || [];
       const evidenceData = await api('/evidence');
       evidence = evidenceData.evidence || [];
+      taskComments = {};
       if(canInviteUsers()){
         const invitationData = await api('/invitations');
         invitations = invitationData.invitations || [];
@@ -581,7 +584,23 @@ async function completeInviteRegistration(event) {
           ${task.managerComment ? `<div class="info" style="margin-top:10px;border-color:var(--red)"><b>Manager comment</b><span>${task.managerComment}</span></div>` : ''}
         </div>
         ${renderActionBox(task, latest)}
+        ${renderTaskChat(task)}
       </div>`;
+    }
+    function renderTaskChat(task){
+      const messages=taskComments[task._id];
+      return `<div class="task-chat"><div class="row space"><div class="section-title" style="margin:0">Task conversation</div><button class="btn secondary" onclick="loadTaskComments('${task._id}')">${messages?'Refresh':'Open chat'}</button></div><div class="muted" style="margin:6px 0">Keeper, manager, and task team can continue this conversation even after approval. Mention someone using @email.</div><div class="chat-messages" id="chat-messages-${task._id}">${messages ? (messages.length ? messages.map((comment)=>`<div class="chat-message ${(comment.author?._id||comment.author)===currentUser.id?'mine':''}"><div class="chat-meta">${comment.author?.fullName||'Team member'} · ${fmtDate(comment.createdAt)}</div><div>${formatChatMessage(comment.message)}</div></div>`).join('') : '<div class="muted">No messages yet. Start the conversation below.</div>') : '<div class="muted">Open chat to load the conversation.</div>'}</div><div class="chat-compose"><textarea class="textarea" id="chat-input-${task._id}" placeholder="Write a reply or mention @name@example.com"></textarea><button class="btn primary" onclick="sendTaskComment('${task._id}')">Send</button></div><div class="error" id="chat-error-${task._id}"></div></div>`;
+    }
+    function formatChatMessage(message){
+      const safe=String(message||'').replace(/[&<>]/g,(character)=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[character]));
+      return safe.replace(/(@[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi,'<span class="mention">$1</span>').replace(/\n/g,'<br>');
+    }
+    async function loadTaskComments(taskId){
+      try{const data=await api(`/comments?task=${encodeURIComponent(taskId)}`);taskComments[taskId]=data.comments||[];renderOperations();setTimeout(()=>{const box=qs(`chat-messages-${taskId}`);if(box)box.scrollTop=box.scrollHeight;},0);}catch(error){alert(error.message);}
+    }
+    async function sendTaskComment(taskId){
+      const input=qs(`chat-input-${taskId}`);const message=input?.value.trim();if(!message)return;
+      try{await api('/comments',{method:'POST',body:JSON.stringify({task:taskId,message})});await loadTaskComments(taskId);}catch(error){qs(`chat-error-${taskId}`).textContent=error.message;}
     }
     function renderActionBox(task, latest){
       if(canSubmitEvidence()){

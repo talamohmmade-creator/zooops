@@ -61,6 +61,7 @@
     .attachment-card{display:grid;grid-template-columns:180px 1fr;min-height:145px}.attachment-card .attachment-preview{position:relative;background:#e5e9ed;overflow:hidden}.attachment-card iframe,.attachment-card img{width:100%;height:145px;border:0;object-fit:cover;pointer-events:none}.attachment-details{padding:18px;display:flex;flex-direction:column;justify-content:center;min-width:0}.attachment-details strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.file-badge{display:inline-flex;align-items:center;align-self:flex-start;margin-bottom:10px;padding:5px 8px;border-radius:6px;background:#e53935;color:#fff;font-size:11px;font-weight:900}.file-badge.doc{background:#2775ca}.attachment-details .muted{font-size:12px;margin-top:7px}
     .delete-file{position:absolute;top:7px;right:7px;z-index:3;width:30px;height:30px;border:0;border-radius:50%;background:rgba(32,43,57,.88);color:#fff;font-size:20px;line-height:28px;cursor:pointer}
     .viewer{position:fixed;inset:0;z-index:1000;background:rgba(15,25,35,.88);display:grid;place-items:center;padding:30px}.viewer-card{width:min(1000px,94vw);height:min(760px,90vh);background:#fff;border-radius:16px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}.viewer-head,.viewer-foot{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}.viewer-body{background:#1c2733;display:grid;place-items:center;min-height:0}.viewer-body img,.viewer-body video{max-width:100%;max-height:100%;object-fit:contain}.viewer-body iframe{width:100%;height:100%;border:0;background:#fff}.viewer-close{font-size:25px}
+    .upload-picker{margin:10px 0;padding:12px;border:2px dashed #bdd3df;border-radius:14px;background:#fff}.upload-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.upload-label{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:#e8faf8;color:var(--green);font-weight:800;cursor:pointer}.pending-files{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}.pending-file{position:relative;width:118px;height:118px;border:1px solid var(--border);border-radius:11px;background:#f5f8fb;overflow:hidden}.pending-preview{width:100%;height:78px;border:0;padding:0;background:#e8edf2;cursor:pointer;display:grid;place-items:center}.pending-preview img,.pending-preview video,.pending-preview iframe{width:100%;height:78px;object-fit:cover;border:0;pointer-events:none}.pending-file-icon{font-size:20px;font-weight:900;color:var(--green)}.pending-file-info{padding:6px 8px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pending-remove{position:absolute;right:4px;top:4px;z-index:2;width:23px;height:23px;border:0;border-radius:50%;background:#1f2d3d;color:#fff;font-size:17px;line-height:20px;cursor:pointer}
     .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
     .stat.active-filter{border:2px solid var(--green);background:#e8faf8;box-shadow:0 10px 22px rgba(22,166,160,.14)}
     .location-choice{text-align:left;cursor:pointer;color:var(--text);font:inherit;min-height:88px;transition:.15s ease}
@@ -142,6 +143,7 @@
     let calendarData = { tasks: [], reminders: [] };
     const editingEvidenceTasks = new Set();
     const savingEvidenceTasks = new Set();
+    const pendingEvidenceFiles = new Map();
     const permissionLabels = {
       'tasks.read': 'View tasks',
       'tasks.create': 'Create tasks',
@@ -570,7 +572,12 @@ async function completeInviteRegistration(event) {
           <div class="row space"><div class="section-title">${latest ? 'Edit evidence' : 'Keeper evidence'}</div>${latest ? `<span class="tag ${latest.status === 'draft' ? '' : 'red'}">${latest.status === 'draft' ? 'Saved draft' : 'Changes requested'}</span>` : ''}</div>
           ${renderFiles(latest)}
           <textarea class="textarea" id="note-${task._id}" placeholder="Write keeper note">${latest?.note || ''}</textarea>
-          <input class="input" id="files-${task._id}" type="file" multiple style="margin:10px 0">
+          <div class="upload-picker">
+            <input class="upload-input" id="files-${task._id}" type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx" onchange="selectEvidenceFiles('${task._id}',this.files)">
+            <label class="upload-label" for="files-${task._id}">+ Choose photos or files</label>
+            <div class="muted" style="margin-top:7px">Preview and remove files before saving or sending.</div>
+            <div class="pending-files" id="pending-files-${task._id}"></div>
+          </div>
           <div class="error" id="evidence-message-${task._id}"></div>
           <div class="row">
             <button class="btn secondary" id="draft-btn-${task._id}" onclick="saveEvidence('${task._id}', false)">Save draft</button>
@@ -664,6 +671,52 @@ async function completeInviteRegistration(event) {
       renderEvidenceViewer();
     }
     function closeEvidenceViewer(){ viewerState = null; document.getElementById('evidence-viewer')?.remove(); }
+    function pendingFileType(file){
+      const name = file.name.toLowerCase();
+      if(file.type.startsWith('image/')) return 'photo';
+      if(file.type.startsWith('video/')) return 'video';
+      if(file.type === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+      return 'document';
+    }
+    function selectEvidenceFiles(taskId, fileList){
+      const entries = pendingEvidenceFiles.get(taskId) || [];
+      Array.from(fileList).forEach((file) => {
+        if(entries.some((entry) => entry.file.name === file.name && entry.file.size === file.size && entry.file.lastModified === file.lastModified)) return;
+        entries.push({ id:`pending-${Date.now()}-${Math.random().toString(16).slice(2)}`, file, type:pendingFileType(file), url:URL.createObjectURL(file) });
+      });
+      pendingEvidenceFiles.set(taskId, entries);
+      const input = qs(`files-${taskId}`); if(input) input.value = '';
+      renderPendingFiles(taskId);
+    }
+    function renderPendingFiles(taskId){
+      const box = qs(`pending-files-${taskId}`); if(!box) return;
+      box.innerHTML = (pendingEvidenceFiles.get(taskId) || []).map((entry) => {
+        const preview = entry.type === 'photo' ? `<img src="${entry.url}" alt="${entry.file.name}">`
+          : entry.type === 'video' ? `<video src="${entry.url}" muted></video>`
+          : entry.type === 'pdf' ? `<iframe src="${entry.url}#page=1&toolbar=0&navpanes=0" title="${entry.file.name}"></iframe>`
+          : `<span class="pending-file-icon">DOC</span>`;
+        return `<div class="pending-file"><button class="pending-remove" type="button" title="Remove" onclick="removePendingFile('${taskId}','${entry.id}')">&times;</button><button class="pending-preview" type="button" onclick="openPendingFile('${taskId}','${entry.id}')">${preview}</button><div class="pending-file-info" title="${entry.file.name}">${entry.file.name}</div></div>`;
+      }).join('');
+    }
+    function removePendingFile(taskId, entryId){
+      const entries = pendingEvidenceFiles.get(taskId) || [];
+      const entry = entries.find((item) => item.id === entryId); if(entry) URL.revokeObjectURL(entry.url);
+      const remaining = entries.filter((item) => item.id !== entryId);
+      remaining.length ? pendingEvidenceFiles.set(taskId, remaining) : pendingEvidenceFiles.delete(taskId);
+      renderPendingFiles(taskId);
+    }
+    function openPendingFile(taskId, entryId){
+      const entry = (pendingEvidenceFiles.get(taskId) || []).find((item) => item.id === entryId); if(!entry) return;
+      closeEvidenceViewer();
+      const content = entry.type === 'photo' ? `<img src="${entry.url}" alt="${entry.file.name}">`
+        : entry.type === 'video' ? `<video src="${entry.url}" controls autoplay></video>`
+        : entry.type === 'pdf' ? `<iframe src="${entry.url}#page=1" title="${entry.file.name}"></iframe>`
+        : `<div style="text-align:center;color:#fff"><div style="font-size:70px;font-weight:900">DOC</div><div>${entry.file.name}</div></div>`;
+      const viewer = document.createElement('div'); viewer.id = 'evidence-viewer'; viewer.className = 'viewer';
+      viewer.onclick = (event) => { if(event.target === viewer) closeEvidenceViewer(); };
+      viewer.innerHTML = `<div class="viewer-card"><div class="viewer-head"><b>${entry.file.name}</b><div class="row"><a class="btn primary" href="${entry.url}" download="${entry.file.name}" style="text-decoration:none">Download</a><button class="btn secondary viewer-close" onclick="closeEvidenceViewer()">&times;</button></div></div><div class="viewer-body">${content}</div><div class="viewer-foot"><span class="tag blue">Selected — not uploaded yet</span></div></div>`;
+      document.body.appendChild(viewer);
+    }
     async function deleteEvidenceFile(evidenceId, fileId){
       if(!confirm('Delete this uploaded file? This cannot be undone.')) return;
       try{
@@ -686,7 +739,7 @@ async function completeInviteRegistration(event) {
       form.append('task', taskId);
       form.append('note', qs(`note-${taskId}`).value);
       form.append('submitNow', submitNow ? 'true' : 'false');
-      Array.from(qs(`files-${taskId}`).files).forEach((file) => form.append('files', file));
+      (pendingEvidenceFiles.get(taskId) || []).forEach((entry) => form.append('files', entry.file));
       try{
         const latest = taskEvidence(taskId)[0];
         const url = latest ? `${API_BASE}/evidence/${latest._id}` : `${API_BASE}/evidence`;
@@ -698,6 +751,8 @@ async function completeInviteRegistration(event) {
           const submitResponse = await api(`/evidence/${latest._id}/submit`, { method:'PATCH', body:'{}' });
         }
         editingEvidenceTasks.delete(taskId);
+        (pendingEvidenceFiles.get(taskId) || []).forEach((entry) => URL.revokeObjectURL(entry.url));
+        pendingEvidenceFiles.delete(taskId);
         await loadAll();
         render();
       }catch(error){

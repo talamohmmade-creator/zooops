@@ -1,7 +1,8 @@
 const Evidence = require('../models/Evidence');
 const Task = require('../models/Task');
 const { hasPermission } = require('../middleware/permissionMiddleware');
-const { fileToEvidenceFile } = require('../middleware/uploadMiddleware');
+const { fileToEvidenceFile, getBucket } = require('../middleware/uploadMiddleware');
+const mongoose = require('mongoose');
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -59,10 +60,10 @@ function parseJsonArray(value) {
   }
 }
 
-function getRequestFiles(req) {
+async function getRequestFiles(req) {
   const metadataFiles = normalizeFiles(parseJsonArray(req.body.files), req.user._id);
   const uploadedFiles = Array.isArray(req.files)
-    ? req.files.map((file) => fileToEvidenceFile(file, req.user._id, req))
+    ? await Promise.all(req.files.map((file) => fileToEvidenceFile(file, req.user._id, req)))
     : [];
 
   return [...metadataFiles, ...uploadedFiles];
@@ -136,7 +137,7 @@ async function createEvidence(req, res) {
   const evidence = await Evidence.create({
     task: task._id,
     note,
-    files: getRequestFiles(req),
+    files: await getRequestFiles(req),
     status: evidenceStatus,
     submittedBy: req.user._id,
     submittedAt: submitNow ? new Date() : undefined
@@ -184,7 +185,7 @@ async function updateEvidence(req, res) {
     evidence.note = note;
   }
 
-  const requestFiles = getRequestFiles(req);
+  const requestFiles = await getRequestFiles(req);
   if (requestFiles.length > 0) {
     evidence.files.push(...requestFiles);
   }
@@ -335,12 +336,18 @@ async function deleteEvidenceFile(req, res) {
   if (!file) return res.status(404).json({ message: 'Evidence file not found.' });
 
   if (file.storageKey) {
-    const uploadRoot = path.resolve(__dirname, '..', '..', 'uploads');
-    const filePath = path.resolve(uploadRoot, file.storageKey);
-    if (filePath.startsWith(`${uploadRoot}${path.sep}`)) {
-      await fs.unlink(filePath).catch((error) => {
-        if (error.code !== 'ENOENT') throw error;
+    if (mongoose.isValidObjectId(file.storageKey) && file.url.includes('/api/files/')) {
+      await getBucket().delete(new mongoose.Types.ObjectId(file.storageKey)).catch((error) => {
+        if (error.code !== 26) throw error;
       });
+    } else {
+      const uploadRoot = path.resolve(__dirname, '..', '..', 'uploads');
+      const filePath = path.resolve(uploadRoot, file.storageKey);
+      if (filePath.startsWith(`${uploadRoot}${path.sep}`)) {
+        await fs.unlink(filePath).catch((error) => {
+          if (error.code !== 'ENOENT') throw error;
+        });
+      }
     }
   }
   evidence.files.pull(file._id);

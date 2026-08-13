@@ -14,13 +14,11 @@ const calendarReminderSchema = new mongoose.Schema(
     },
     enclosure: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Enclosure',
-      required: true
+      ref: 'Enclosure'
     },
     zone: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Zone',
-      required: true
+      ref: 'Zone'
     },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
@@ -43,7 +41,7 @@ const calendarReminderSchema = new mongoose.Schema(
     },
     createsTask: {
       type: Boolean,
-      default: true
+      default: false
     },
     active: {
       type: Boolean,

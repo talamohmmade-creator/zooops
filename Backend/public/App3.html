@@ -135,6 +135,8 @@
     let selectedTaskDate = localDateKey(new Date());
     let selectedZoneId = '';
     let selectedEnclosureId = '';
+    const editingEvidenceTasks = new Set();
+    const savingEvidenceTasks = new Set();
     const permissionLabels = {
       'tasks.read': 'View tasks',
       'tasks.create': 'Create tasks',
@@ -433,7 +435,8 @@ async function completeInviteRegistration(event) {
       renderOperations();
     }
     function taskEvidence(taskId){
-      return evidence.filter((item) => item.task && item.task._id === taskId);
+      return evidence.filter((item) => item.task && item.task._id === taskId)
+        .sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
     }
     function renderOperations(){
       const dateTasks = tasks.filter((task) => task.dueDate && localDateKey(task.dueDate) === selectedTaskDate);
@@ -443,11 +446,13 @@ async function completeInviteRegistration(event) {
       const total = locationTasks.length;
       const approvedStatuses = ['supervisor_approved','manager_approved','completed'];
       const rejectedStatuses = ['update_requested','manager_returned','cancelled'];
+      const drafts = locationTasks.filter((task) => task.status === 'draft');
       const approved = locationTasks.filter((task) => approvedStatuses.includes(task.status));
       const rejected = locationTasks.filter((task) => rejectedStatuses.includes(task.status));
-      const pending = locationTasks.filter((task) => !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
+      const pending = locationTasks.filter((task) => task.status !== 'draft' && !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
       const filteredTasks = taskFilter === 'approved' ? approved
         : taskFilter === 'rejected' ? rejected
+        : taskFilter === 'draft' ? drafts
         : taskFilter === 'pending' ? pending
         : locationTasks;
       const selectedZone = options.zones.find((zone) => zone._id === selectedZoneId);
@@ -462,13 +467,14 @@ async function completeInviteRegistration(event) {
         return `<button class="info location-choice" onclick="selectTaskEnclosure('${enclosure._id}')"><b>${enclosure.name}</b><span>${count} task${count === 1 ? '' : 's'} on this date</span></button>`;
       }).join('') || '<div class="muted">No enclosures are configured for this zone.</div>'}</div></div>`;
       const taskView = `<div class="row" style="margin-bottom:14px"><button class="btn secondary" onclick="showTaskEnclosures()">&#8592; ${selectedZone?.name || 'Enclosures'}</button><span class="tag blue">${selectedZone?.name || ''} / ${selectedEnclosure?.name || ''}</span></div>
-        <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        <div class="grid" style="grid-template-columns:repeat(5,minmax(0,1fr))">
           <button class="stat ${taskFilter === 'all' ? 'active-filter' : ''}" onclick="setTaskFilter('all')" style="text-align:left;cursor:pointer"><div class="stat-num">${total}</div><div class="muted">All tasks</div></button>
+          <button class="stat ${taskFilter === 'draft' ? 'active-filter' : ''}" onclick="setTaskFilter('draft')" style="text-align:left;cursor:pointer"><div class="stat-num">${drafts.length}</div><div class="muted">Saved drafts</div></button>
           <button class="stat ${taskFilter === 'pending' ? 'active-filter' : ''}" onclick="setTaskFilter('pending')" style="text-align:left;cursor:pointer"><div class="stat-num">${pending.length}</div><div class="muted">Pending review</div></button>
           <button class="stat ${taskFilter === 'approved' ? 'active-filter' : ''}" onclick="setTaskFilter('approved')" style="text-align:left;cursor:pointer"><div class="stat-num">${approved.length}</div><div class="muted">Approved / completed</div></button>
           <button class="stat ${taskFilter === 'rejected' ? 'active-filter' : ''}" onclick="setTaskFilter('rejected')" style="text-align:left;cursor:pointer"><div class="stat-num">${rejected.length}</div><div class="muted">Rejected / returned</div></button>
         </div>
-        <div class="card"><div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks in this enclosure on ${selectedDateLabel()}.</div>`}</div>`;
+        <div class="card"><div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'draft' ? 'Saved drafts' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks in this enclosure on ${selectedDateLabel()}.</div>`}</div>`;
       qs('main').innerHTML = `
         <div class="topbar">
           <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
@@ -544,14 +550,25 @@ async function completeInviteRegistration(event) {
     }
     function renderActionBox(task, latest){
       if(canSubmitEvidence()){
+        const isEditing = !latest || latest.status === 'draft' || ['returned','update_requested'].includes(latest.status) || editingEvidenceTasks.has(task._id);
+        if(!isEditing){
+          const approved = latest.status === 'approved';
+          return `<div class="evidence-box">
+            <div class="row space"><div class="section-title">Keeper evidence</div><span class="tag ${approved ? 'green' : 'blue'}">${approved ? 'Approved' : 'Already sent'}</span></div>
+            ${renderFiles(latest)}
+            <div class="info"><b>Keeper note</b><span>${latest.note || '-'}</span></div>
+            ${approved ? '<div class="muted" style="margin-top:10px">Approved evidence is locked.</div>' : `<button class="btn secondary" style="margin-top:12px" onclick="editEvidence('${task._id}')">&#9998; Edit submission</button>`}
+          </div>`;
+        }
         return `<div class="evidence-box">
-          <div class="section-title">Keeper evidence</div>
+          <div class="row space"><div class="section-title">${latest ? 'Edit evidence' : 'Keeper evidence'}</div>${latest ? `<span class="tag ${latest.status === 'draft' ? '' : 'red'}">${latest.status === 'draft' ? 'Saved draft' : 'Changes requested'}</span>` : ''}</div>
           ${renderFiles(latest)}
           <textarea class="textarea" id="note-${task._id}" placeholder="Write keeper note">${latest?.note || ''}</textarea>
           <input class="input" id="files-${task._id}" type="file" multiple style="margin:10px 0">
+          <div class="error" id="evidence-message-${task._id}"></div>
           <div class="row">
-            <button class="btn secondary" onclick="saveEvidence('${task._id}', false)">Save draft</button>
-            <button class="btn primary" onclick="saveEvidence('${task._id}', true)">Send for approval</button>
+            <button class="btn secondary" id="draft-btn-${task._id}" onclick="saveEvidence('${task._id}', false)">Save draft</button>
+            <button class="btn primary" id="send-btn-${task._id}" onclick="saveEvidence('${task._id}', true)">${latest && latest.status !== 'draft' ? 'Send edited evidence' : 'Send for approval'}</button>
           </div>
         </div>`;
       }
@@ -570,6 +587,7 @@ async function completeInviteRegistration(event) {
       }
       return `<div class="evidence-box"><div class="muted">No actions available for this role.</div></div>`;
     }
+    function editEvidence(taskId){ editingEvidenceTasks.add(taskId); renderOperations(); }
     function renderFiles(latest){
       if(!latest || !latest.files || latest.files.length === 0) return '<div class="muted">No uploaded files yet.</div>';
       const files = [...latest.files].sort((a,b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0));
@@ -641,15 +659,39 @@ async function completeInviteRegistration(event) {
       }catch(error){ alert(error.message); }
     }
     async function saveEvidence(taskId, submitNow){
+      if(savingEvidenceTasks.has(taskId)) return;
+      savingEvidenceTasks.add(taskId);
+      const message = qs(`evidence-message-${taskId}`);
+      const draftButton = qs(`draft-btn-${taskId}`);
+      const sendButton = qs(`send-btn-${taskId}`);
+      if(message) message.textContent = submitNow ? 'Sending...' : 'Saving draft...';
+      if(draftButton) draftButton.disabled = true;
+      if(sendButton) sendButton.disabled = true;
       const form = new FormData();
       form.append('task', taskId);
       form.append('note', qs(`note-${taskId}`).value);
       form.append('submitNow', submitNow ? 'true' : 'false');
       Array.from(qs(`files-${taskId}`).files).forEach((file) => form.append('files', file));
-      await fetch(`${API_BASE}/evidence`, { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body:form })
-        .then(async (res) => { if(!res.ok) throw new Error((await res.json()).message); });
-      await loadAll();
-      render();
+      try{
+        const latest = taskEvidence(taskId)[0];
+        const url = latest ? `${API_BASE}/evidence/${latest._id}` : `${API_BASE}/evidence`;
+        const method = latest ? 'PATCH' : 'POST';
+        const response = await fetch(url, { method, headers:{ Authorization:`Bearer ${token}` }, body:form });
+        const data = await response.json().catch(() => ({}));
+        if(!response.ok) throw new Error(data.message || 'Could not save evidence.');
+        if(latest && submitNow){
+          const submitResponse = await api(`/evidence/${latest._id}/submit`, { method:'PATCH', body:'{}' });
+        }
+        editingEvidenceTasks.delete(taskId);
+        await loadAll();
+        render();
+      }catch(error){
+        if(message) message.textContent = error.message;
+        if(draftButton) draftButton.disabled = false;
+        if(sendButton) sendButton.disabled = false;
+      }finally{
+        savingEvidenceTasks.delete(taskId);
+      }
     }
     async function changeEvidenceStatus(evidenceId, status){
       if(!evidenceId) return alert('No evidence record found for this task yet.');
@@ -904,10 +946,16 @@ async function completeInviteRegistration(event) {
       }
     }
     function renderReview(){
+      const newestByTask = new Map();
+      [...evidence].sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)).forEach((item) => {
+        const taskId = item.task?._id;
+        if(taskId && !newestByTask.has(taskId)) newestByTask.set(taskId, item);
+      });
+      const reviewEvidence = [...newestByTask.values()].filter((item) => item.status !== 'draft');
       qs('main').innerHTML = `
         <div class="topbar"><div><h1>Evidence review</h1><div class="muted">Review submitted keeper evidence and approval status.</div></div></div>
         <div class="card">
-          ${evidence.length ? evidence.map((ev) => `<div class="task">
+          ${reviewEvidence.length ? reviewEvidence.map((ev) => `<div class="task">
             <div>
               <div class="task-title">${ev.task?.title || 'Evidence'}</div>
               <div class="meta">Keeper: ${ev.submittedBy?.fullName || '-'} - ${fmtDate(ev.submittedAt || ev.updatedAt)}</div>

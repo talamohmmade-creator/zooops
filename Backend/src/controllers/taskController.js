@@ -40,6 +40,10 @@ function buildTaskFilter(user, query) {
     };
   }
 
+  if (roleName !== 'Keeper' && !query.status && !(roleName === 'Management' && query.managerQueue === 'true')) {
+    filter.status = { $ne: 'draft' };
+  }
+
   return filter;
 }
 

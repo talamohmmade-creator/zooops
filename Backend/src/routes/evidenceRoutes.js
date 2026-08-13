@@ -5,7 +5,8 @@ const {
   createEvidence,
   updateEvidence,
   submitEvidence,
-  updateEvidenceStatus
+  updateEvidenceStatus,
+  deleteEvidenceFile
 } = require('../controllers/evidenceController');
 const requireAuth = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/permissionMiddleware');
@@ -19,5 +20,6 @@ router.post('/', requireAuth, requirePermission('evidence', 'create'), uploadEvi
 router.patch('/:id', requireAuth, requirePermission('evidence', 'update'), uploadEvidenceFiles.array('files', 10), updateEvidence);
 router.patch('/:id/submit', requireAuth, requirePermission('evidence', 'update'), submitEvidence);
 router.patch('/:id/status', requireAuth, updateEvidenceStatus);
+router.delete('/:id/files/:fileId', requireAuth, deleteEvidenceFile);
 
 module.exports = router;

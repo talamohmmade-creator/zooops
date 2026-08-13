@@ -72,7 +72,10 @@ async function getTaskOptions(req, res) {
 async function createTask(req, res) {
   const required = ['title', 'assignedTo', 'dueDate'];
   if (required.some((key) => !req.body[key])) return res.status(400).json({ message: 'Title, assignee, and due date are required.' });
-  const task = await Task.create({ ...req.body, createdBy: req.user._id, status: 'assigned', approvalHistory: [{ action: 'created', by: req.user._id }] });
+  const dueDate = req.body.dueTime && /^\d{4}-\d{2}-\d{2}$/.test(req.body.dueDate)
+    ? new Date(`${req.body.dueDate}T${req.body.dueTime}:00`)
+    : new Date(req.body.dueDate);
+  const task = await Task.create({ ...req.body, dueDate, createdBy: req.user._id, status: 'assigned', approvalHistory: [{ action: 'created', by: req.user._id }] });
   res.status(201).json({ message: 'Task created.', task: await Task.findById(task._id).populate(taskPopulate) });
 }
 

@@ -1,7 +1,12 @@
 const { User } = require('../models');
 const formatUser = require('../utils/formatUser');
 
-const allowedCustomPermissions = new Set(['calendar.create']);
+const resources = new Set(['users', 'roles', 'animals', 'enclosures', 'tasks', 'evidence', 'comments', 'mentions', 'calendar', 'reports', 'ai']);
+const actions = new Set(['create', 'read', 'update', 'delete', 'assign', 'approve', 'return', 'escalate', 'upload', 'manage']);
+const isAllowedPermission = (value) => {
+  const [resource, action, ...rest] = String(value || '').split('.');
+  return rest.length === 0 && resources.has(resource) && actions.has(action);
+};
 
 async function listTeam(req, res) {
   const users = await User.find({ active: true }).populate('role').sort({ fullName: 1 });
@@ -14,12 +19,10 @@ async function updatePermissions(req, res) {
   if (!user) return res.status(404).json({ message: 'Team member not found.' });
   const permissions = Array.isArray(req.body.permissions) ? req.body.permissions : [];
   const temporaryPermissions = Array.isArray(req.body.temporaryPermissions) ? req.body.temporaryPermissions : [];
-  if (permissions.some((value) => !allowedCustomPermissions.has(value))) return res.status(400).json({ message: 'One or more permissions are not allowed.' });
-  if (temporaryPermissions.some((grant) => !allowedCustomPermissions.has(grant.permission) || !grant.expiresAt || Number.isNaN(new Date(grant.expiresAt).getTime()))) return res.status(400).json({ message: 'One or more temporary permissions are invalid.' });
-  const preservedPermissions = (user.customPermissions || []).filter((value) => !allowedCustomPermissions.has(value));
-  user.customPermissions = [...new Set([...preservedPermissions, ...permissions])];
-  const preservedTemporary = (user.temporaryPermissions || []).filter((grant) => !allowedCustomPermissions.has(grant.permission));
-  user.temporaryPermissions = [...preservedTemporary, ...temporaryPermissions.map((grant) => ({ permission: grant.permission, expiresAt: new Date(grant.expiresAt) }))];
+  if (permissions.some((value) => !isAllowedPermission(value))) return res.status(400).json({ message: 'One or more permissions are not allowed.' });
+  if (temporaryPermissions.some((grant) => !isAllowedPermission(grant.permission) || !grant.expiresAt || Number.isNaN(new Date(grant.expiresAt).getTime()))) return res.status(400).json({ message: 'One or more temporary permissions are invalid.' });
+  user.customPermissions = [...new Set(permissions)];
+  user.temporaryPermissions = temporaryPermissions.map((grant) => ({ permission: grant.permission, expiresAt: new Date(grant.expiresAt) }));
   await user.save();
   await user.populate('role');
   res.json({ message: 'Permissions updated.', user: formatUser(user) });

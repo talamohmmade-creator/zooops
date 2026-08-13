@@ -53,10 +53,24 @@
     .file-list{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
     .file-chip{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;min-width:120px;font-size:13px}
     .file-chip b{display:block;color:var(--green)}.section-title{font-size:18px;font-weight:800;margin-bottom:12px}
+    .evidence-gallery{display:flex;flex-direction:column;gap:12px;margin:10px 0;max-width:520px}.photo-collage{display:grid;grid-template-columns:repeat(2,160px);grid-auto-rows:120px;gap:4px;border-radius:12px;overflow:hidden;width:max-content;max-width:100%}.photo-collage.one{grid-template-columns:220px}.photo-collage.one .evidence-thumb{height:150px}.photo-collage.three .evidence-thumb:first-child{grid-row:span 2;height:244px}.photo-collage.three .evidence-thumb:not(:first-child){height:120px}
+    .evidence-thumb{position:relative;min-height:120px;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;cursor:pointer;padding:0;text-align:left;color:var(--text)}
+    .photo-collage .evidence-thumb{width:160px;height:120px;min-height:0;border:0;border-radius:0}.photo-collage.one .evidence-thumb{width:220px}.photo-collage .evidence-thumb img{height:100%}.evidence-thumb img,.evidence-thumb iframe,.evidence-thumb video{display:block;width:100%;height:150px;object-fit:cover;border:0;pointer-events:none}
+    .evidence-thumb-meta{padding:9px 11px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.evidence-thumb-meta b{color:var(--green);display:block;text-transform:uppercase;font-size:11px}
+    .more-overlay{position:absolute;inset:0;background:rgba(20,35,50,.55);color:#fff;display:grid;place-items:center;font-size:34px;font-weight:900}
+    .attachment-card{display:grid;grid-template-columns:180px 1fr;min-height:145px}.attachment-card .attachment-preview{position:relative;background:#e5e9ed;overflow:hidden}.attachment-card iframe,.attachment-card img{width:100%;height:145px;border:0;object-fit:cover;pointer-events:none}.attachment-details{padding:18px;display:flex;flex-direction:column;justify-content:center;min-width:0}.attachment-details strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.file-badge{display:inline-flex;align-items:center;align-self:flex-start;margin-bottom:10px;padding:5px 8px;border-radius:6px;background:#e53935;color:#fff;font-size:11px;font-weight:900}.file-badge.doc{background:#2775ca}.attachment-details .muted{font-size:12px;margin-top:7px}
+    .delete-file{position:absolute;top:7px;right:7px;z-index:3;width:30px;height:30px;border:0;border-radius:50%;background:rgba(32,43,57,.88);color:#fff;font-size:20px;line-height:28px;cursor:pointer}
+    .viewer{position:fixed;inset:0;z-index:1000;background:rgba(15,25,35,.88);display:grid;place-items:center;padding:30px}.viewer-card{width:min(1000px,94vw);height:min(760px,90vh);background:#fff;border-radius:16px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}.viewer-head,.viewer-foot{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}.viewer-body{background:#1c2733;display:grid;place-items:center;min-height:0}.viewer-body img,.viewer-body video{max-width:100%;max-height:100%;object-fit:contain}.viewer-body iframe{width:100%;height:100%;border:0;background:#fff}.viewer-close{font-size:25px}
+    .upload-picker{margin:10px 0;padding:12px;border:2px dashed #bdd3df;border-radius:14px;background:#fff}.upload-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.upload-label{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:#e8faf8;color:var(--green);font-weight:800;cursor:pointer}.pending-files{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}.pending-file{position:relative;width:118px;height:118px;border:1px solid var(--border);border-radius:11px;background:#f5f8fb;overflow:hidden}.pending-preview{width:100%;height:78px;border:0;padding:0;background:#e8edf2;cursor:pointer;display:grid;place-items:center}.pending-preview img,.pending-preview video,.pending-preview iframe{width:100%;height:78px;object-fit:cover;border:0;pointer-events:none}.pending-file-icon{font-size:20px;font-weight:900;color:var(--green)}.pending-file-info{padding:6px 8px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pending-remove{position:absolute;right:4px;top:4px;z-index:2;width:23px;height:23px;border:0;border-radius:50%;background:#1f2d3d;color:#fff;font-size:17px;line-height:20px;cursor:pointer}
     .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
+    .stat.active-filter{border:2px solid var(--green);background:#e8faf8;box-shadow:0 10px 22px rgba(22,166,160,.14)}
+    .location-choice{text-align:left;cursor:pointer;color:var(--text);font:inherit;min-height:88px;transition:.15s ease}
+    .location-choice:hover{border-color:var(--green);background:#e8faf8;transform:translateY(-1px)}
+    .location-choice b{font-size:18px;margin-bottom:8px}.location-choice span{display:block;color:var(--dim)}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.calendar-weekday{text-align:center;color:var(--dim);font-size:12px;font-weight:800;padding:7px}.calendar-day{min-height:105px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px;text-align:left;cursor:pointer;color:var(--text)}.calendar-day.outside{opacity:.42}.calendar-day.selected{border:2px solid var(--green);background:#e8faf8}.calendar-number{font-weight:900}.calendar-dot{font-size:11px;padding:3px 5px;border-radius:5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#e8f0ff;color:var(--blue)}.calendar-dot.reminder{background:#fff3dc;color:#c47b00}.agenda-item{border-left:4px solid var(--blue)}.agenda-item.reminder{border-left-color:var(--amber)}
     .profile-head{display:flex;align-items:center;gap:16px}
     .avatar{width:74px;height:74px;border-radius:50%;background:#e8faf8;border:2px solid var(--green);display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--green)}
-    @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid{grid-template-columns:1fr}}
+    @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid,.main>.grid{grid-template-columns:1fr!important}.attachment-card{grid-template-columns:130px 1fr}.photo-collage{grid-template-columns:repeat(2,minmax(0,145px))}.photo-collage .evidence-thumb{width:145px}}
   </style>
 </head>
 <body>
@@ -95,6 +109,7 @@
       <div class="side-label">Navigation</div>
       <div class="nav-item active" data-view="operations" onclick="setView('operations')">My Tasks</div>
       <div class="nav-item" data-view="profile" onclick="setView('profile')">My Profile</div>
+      <div class="nav-item" data-view="calendar" onclick="setView('calendar')">Calendar</div>
       <div class="nav-item" data-view="create" onclick="setView('create')" id="create-nav">Create task</div>
       <div class="nav-item" data-view="invite" onclick="setView('invite')" id="invite-nav">Invite users</div>
       <div class="nav-item" data-view="review" onclick="setView('review')">Evidence review</div>
@@ -104,7 +119,7 @@
   </section>
 
   <script>
-    const BACKEND_URL = (location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port !== '5000'
+    const BACKEND_URL = location.protocol === 'file:' || ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port !== '5000')
       ? 'https://zooops.onrender.com'
       : window.location.origin;
 
@@ -117,7 +132,19 @@
     let tasks = [];
     let evidence = [];
     let invitations = [];
+    let latestInviteLink = null;
     let currentView = 'operations';
+    let taskFilter = 'all';
+    let selectedTaskDate = localDateKey(new Date());
+    let selectedZoneId = '';
+    let selectedEnclosureId = '';
+    let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let calendarSelectedDate = localDateKey(new Date());
+    let calendarData = { tasks: [], reminders: [] };
+    let teamUsers = [];
+    const editingEvidenceTasks = new Set();
+    const savingEvidenceTasks = new Set();
+    const pendingEvidenceFiles = new Map();
     const permissionLabels = {
       'tasks.read': 'View tasks',
       'tasks.create': 'Create tasks',
@@ -132,11 +159,12 @@
       'users.create': 'Invite users',
       'users.manage': 'Manage users',
       'reports.read': 'View reports',
+      'calendar.create': 'Add personal calendar tasks',
       'calendar.manage': 'Manage calendar'
     };
 
     function roleName(){ return currentUser?.role?.name || currentUser?.role || ''; }
-    function canCreateTask(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
+    function canCreateTask(){ return userPermissions().includes('tasks.create') || userPermissions().includes('tasks.manage'); }
     function canReview(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
     function canSubmitEvidence(){ return roleName() === 'Keeper'; }
     function userPermissions(){
@@ -168,6 +196,17 @@
     }
     function qs(id){ return document.getElementById(id); }
     function fmtDate(value){ return value ? new Date(value).toLocaleString([], { dateStyle:'medium', timeStyle:'short' }) : '-'; }
+    function localDateKey(value){
+      const date = new Date(value);
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+    }
+    function selectedDateLabel(){
+      const date = new Date(`${selectedTaskDate}T12:00:00`);
+      const today = localDateKey(new Date());
+      const label = date.toLocaleDateString([], { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      return selectedTaskDate === today ? `Today - ${label}` : label;
+    }
     function statusLabel(status){
       const labels = {
         assigned:'Assigned', draft:'Draft', submitted:'Pending review',
@@ -189,7 +228,7 @@
       if(!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
       const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
       const data = await res.json().catch(() => ({}));
-      if(!res.ok) throw new Error(data.message || 'Request failed');
+      if(!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
       return data;
     }
     function showInviteRegisterScreen() {
@@ -371,6 +410,13 @@ async function completeInviteRegistration(event) {
       }
     }
     async function startApp(){
+      try{
+        const freshAccount = await api('/auth/me');
+        currentUser = freshAccount.user;
+        localStorage.setItem('zooops_user', JSON.stringify(currentUser));
+      }catch(error){
+        signOut(); return;
+      }
       qs('login-screen').style.display = 'none';
       qs('app').style.display = 'block';
       qs('side-user').textContent = currentUser.fullName;
@@ -390,8 +436,11 @@ async function completeInviteRegistration(event) {
       if(canInviteUsers()){
         const invitationData = await api('/invitations');
         invitations = invitationData.invitations || [];
+        const teamData = await api('/users');
+        teamUsers = teamData.users || [];
       } else {
         invitations = [];
+        teamUsers = [];
       }
     }
     function setView(view){ currentView = view; render(); }
@@ -401,29 +450,99 @@ async function completeInviteRegistration(event) {
       if(currentView === 'create') return renderCreateTask();
       if(currentView === 'invite') return renderInviteUsers();
       if(currentView === 'profile') return renderProfile();
+      if(currentView === 'calendar') return renderCalendar();
       if(currentView === 'review') return renderReview();
       renderOperations();
     }
     function taskEvidence(taskId){
-      return evidence.filter((item) => item.task && item.task._id === taskId);
+      return evidence.filter((item) => item.task && item.task._id === taskId)
+        .sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
     }
     function renderOperations(){
-      const total = tasks.length;
-      const done = tasks.filter((task) => ['supervisor_approved','manager_approved','completed'].includes(task.status)).length;
+      const dateTasks = tasks.filter((task) => task.dueDate && localDateKey(task.dueDate) === selectedTaskDate);
+      const locationTasks = selectedEnclosureId
+        ? dateTasks.filter((task) => (task.enclosure?._id || task.enclosure) === selectedEnclosureId)
+        : dateTasks;
+      const total = locationTasks.length;
+      const approvedStatuses = ['supervisor_approved','manager_approved','completed'];
+      const rejectedStatuses = ['update_requested','manager_returned','cancelled'];
+      const drafts = locationTasks.filter((task) => task.status === 'draft');
+      const approved = locationTasks.filter((task) => approvedStatuses.includes(task.status));
+      const rejected = locationTasks.filter((task) => rejectedStatuses.includes(task.status));
+      const pending = locationTasks.filter((task) => task.status !== 'draft' && !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
+      const filteredTasks = taskFilter === 'approved' ? approved
+        : taskFilter === 'rejected' ? rejected
+        : taskFilter === 'draft' ? drafts
+        : taskFilter === 'pending' ? pending
+        : locationTasks;
+      const selectedZone = options.zones.find((zone) => zone._id === selectedZoneId);
+      const selectedEnclosure = options.enclosures.find((enclosure) => enclosure._id === selectedEnclosureId);
+      const zoneEnclosures = options.enclosures.filter((enclosure) => (enclosure.zone?._id || enclosure.zone) === selectedZoneId);
+      const zonePicker = `<div class="card"><div class="section-title">Choose a zone</div><div class="grid g3">${options.zones.map((zone) => {
+        const count = dateTasks.filter((task) => (task.zone?._id || task.zone) === zone._id).length;
+        return `<button class="info location-choice" onclick="selectTaskZone('${zone._id}')"><b>${zone.name}</b><span>${count} task${count === 1 ? '' : 's'} on this date</span></button>`;
+      }).join('') || '<div class="muted">No zones available.</div>'}</div></div>`;
+      const enclosurePicker = `<div class="card"><div class="row space"><div><div class="muted">${selectedZone?.name || 'Zone'}</div><div class="section-title">Choose an enclosure</div></div><button class="btn secondary" onclick="showTaskZones()">&#8592; All zones</button></div><div class="grid g3">${zoneEnclosures.map((enclosure) => {
+        const count = dateTasks.filter((task) => (task.enclosure?._id || task.enclosure) === enclosure._id).length;
+        return `<button class="info location-choice" onclick="selectTaskEnclosure('${enclosure._id}')"><b>${enclosure.name}</b><span>${count} task${count === 1 ? '' : 's'} on this date</span></button>`;
+      }).join('') || '<div class="muted">No enclosures are configured for this zone.</div>'}</div></div>`;
+      const taskView = `<div class="row" style="margin-bottom:14px"><button class="btn secondary" onclick="showTaskEnclosures()">&#8592; ${selectedZone?.name || 'Enclosures'}</button><span class="tag blue">${selectedZone?.name || ''} / ${selectedEnclosure?.name || ''}</span></div>
+        <div class="grid" style="grid-template-columns:repeat(5,minmax(0,1fr))">
+          <button class="stat ${taskFilter === 'all' ? 'active-filter' : ''}" onclick="setTaskFilter('all')" style="text-align:left;cursor:pointer"><div class="stat-num">${total}</div><div class="muted">All tasks</div></button>
+          <button class="stat ${taskFilter === 'draft' ? 'active-filter' : ''}" onclick="setTaskFilter('draft')" style="text-align:left;cursor:pointer"><div class="stat-num">${drafts.length}</div><div class="muted">Saved drafts</div></button>
+          <button class="stat ${taskFilter === 'pending' ? 'active-filter' : ''}" onclick="setTaskFilter('pending')" style="text-align:left;cursor:pointer"><div class="stat-num">${pending.length}</div><div class="muted">Pending review</div></button>
+          <button class="stat ${taskFilter === 'approved' ? 'active-filter' : ''}" onclick="setTaskFilter('approved')" style="text-align:left;cursor:pointer"><div class="stat-num">${approved.length}</div><div class="muted">Approved / completed</div></button>
+          <button class="stat ${taskFilter === 'rejected' ? 'active-filter' : ''}" onclick="setTaskFilter('rejected')" style="text-align:left;cursor:pointer"><div class="stat-num">${rejected.length}</div><div class="muted">Rejected / returned</div></button>
+        </div>
+        <div class="card"><div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'draft' ? 'Saved drafts' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks in this enclosure on ${selectedDateLabel()}.</div>`}</div>`;
       qs('main').innerHTML = `
         <div class="topbar">
           <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
           <span class="tag green">${roleName()} view</span>
         </div>
-        <div class="grid g3">
-          <div class="stat"><div class="stat-num">${total}</div><div class="muted">Tasks visible to you</div></div>
-          <div class="stat"><div class="stat-num">${done}</div><div class="muted">Approved / completed</div></div>
-          <div class="stat"><div class="stat-num">${evidence.length}</div><div class="muted">Evidence records</div></div>
+        <div class="card" style="padding:14px 18px">
+          <div class="row space">
+            <div class="row">
+              <button class="btn secondary" onclick="moveTaskDate(-1)" title="Previous day">&#8592;</button>
+              <div style="min-width:260px;text-align:center"><b>${selectedDateLabel()}</b></div>
+              <button class="btn secondary" onclick="moveTaskDate(1)" title="Next day">&#8594;</button>
+            </div>
+            <div class="row">
+              <input class="input" style="width:auto" type="date" value="${selectedTaskDate}" onchange="selectTaskDate(this.value)">
+              <button class="btn secondary" onclick="goToToday()">Today</button>
+            </div>
+          </div>
         </div>
-        <div class="card">
-          <div class="section-title">Tasks</div>
-          ${tasks.length ? tasks.map(renderTask).join('') : '<div class="muted">No tasks found. Manager/Admin can create one from Create task.</div>'}
-        </div>`;
+        ${!selectedZoneId ? zonePicker : !selectedEnclosureId ? enclosurePicker : taskView}`;
+    }
+    function selectTaskZone(zoneId){ selectedZoneId = zoneId; selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
+    function selectTaskEnclosure(enclosureId){ selectedEnclosureId = enclosureId; taskFilter = 'all'; renderOperations(); }
+    function showTaskZones(){ selectedZoneId = ''; selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
+    function showTaskEnclosures(){ selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
+    function setTaskFilter(filter){
+      taskFilter = filter;
+      renderOperations();
+    }
+    function selectTaskDate(value){
+      if(!value) return;
+      selectedTaskDate = value;
+      selectedZoneId = '';
+      selectedEnclosureId = '';
+      renderOperations();
+    }
+    function moveTaskDate(days){
+      const date = new Date(`${selectedTaskDate}T12:00:00`);
+      date.setDate(date.getDate() + days);
+      selectedTaskDate = localDateKey(date);
+      selectedZoneId = '';
+      selectedEnclosureId = '';
+      renderOperations();
+    }
+    function goToToday(){
+      selectedTaskDate = localDateKey(new Date());
+      selectedZoneId = '';
+      selectedEnclosureId = '';
+      renderOperations();
     }
     function renderTask(task){
       const ev = taskEvidence(task._id);
@@ -451,14 +570,30 @@ async function completeInviteRegistration(event) {
     }
     function renderActionBox(task, latest){
       if(canSubmitEvidence()){
+        const isEditing = !latest || latest.status === 'draft' || ['returned','update_requested'].includes(latest.status) || editingEvidenceTasks.has(task._id);
+        if(!isEditing){
+          const approved = latest.status === 'approved';
+          return `<div class="evidence-box">
+            <div class="row space"><div class="section-title">Keeper evidence</div><span class="tag ${approved ? 'green' : 'blue'}">${approved ? 'Approved' : 'Already sent'}</span></div>
+            ${renderFiles(latest)}
+            <div class="info"><b>Keeper note</b><span>${latest.note || '-'}</span></div>
+            ${approved ? '<div class="muted" style="margin-top:10px">Approved evidence is locked.</div>' : `<button class="btn secondary" style="margin-top:12px" onclick="editEvidence('${task._id}')">&#9998; Edit submission</button>`}
+          </div>`;
+        }
         return `<div class="evidence-box">
-          <div class="section-title">Keeper evidence</div>
+          <div class="row space"><div class="section-title">${latest ? 'Edit evidence' : 'Keeper evidence'}</div>${latest ? `<span class="tag ${latest.status === 'draft' ? '' : 'red'}">${latest.status === 'draft' ? 'Saved draft' : 'Changes requested'}</span>` : ''}</div>
           ${renderFiles(latest)}
           <textarea class="textarea" id="note-${task._id}" placeholder="Write keeper note">${latest?.note || ''}</textarea>
-          <input class="input" id="files-${task._id}" type="file" multiple style="margin:10px 0">
+          <div class="upload-picker">
+            <input class="upload-input" id="files-${task._id}" type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx" onchange="selectEvidenceFiles('${task._id}',this.files)">
+            <label class="upload-label" for="files-${task._id}">+ Choose photos or files</label>
+            <div class="muted" style="margin-top:7px">Preview and remove files before saving or sending.</div>
+            <div class="pending-files" id="pending-files-${task._id}"></div>
+          </div>
+          <div class="error" id="evidence-message-${task._id}"></div>
           <div class="row">
-            <button class="btn secondary" onclick="saveEvidence('${task._id}', false)">Save draft</button>
-            <button class="btn primary" onclick="saveEvidence('${task._id}', true)">Send for approval</button>
+            <button class="btn secondary" id="draft-btn-${task._id}" onclick="saveEvidence('${task._id}', false)">Save draft</button>
+            <button class="btn primary" id="send-btn-${task._id}" onclick="saveEvidence('${task._id}', true)">${latest && latest.status !== 'draft' ? 'Send edited evidence' : 'Send for approval'}</button>
           </div>
         </div>`;
       }
@@ -470,35 +605,183 @@ async function completeInviteRegistration(event) {
           <textarea class="textarea" id="comment-${task._id}" placeholder="Comment if returning or escalating"></textarea>
           <div class="row" style="margin-top:10px">
             ${roleName() === 'Supervisor' && task.status === 'submitted' ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Approve evidence</button><button class="btn secondary" onclick="changeEvidenceStatus('${latest?._id}','update_requested')">Request update</button>` : ''}
-            ${roleName() === 'Management' && ['supervisor_approved','manager_review'].includes(task.status) ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Manager approve</button><button class="btn secondary" onclick="changeEvidenceStatus('${latest?._id}','returned')">Not approved</button>` : ''}
+            ${['Management','Admin'].includes(roleName()) && ['submitted','supervisor_approved','manager_review','manager_returned'].includes(task.status) ? `<button class="btn primary" onclick="changeEvidenceStatus('${latest?._id}','approved')">Approve task</button><button class="btn danger" onclick="changeEvidenceStatus('${latest?._id}','returned')">Reject / return</button>` : ''}
             ${roleName() !== 'Keeper' ? `<button class="btn secondary" onclick="alert('Mention chat will be the next backend step.')">@ Escalate</button>` : ''}
           </div>
         </div>`;
       }
       return `<div class="evidence-box"><div class="muted">No actions available for this role.</div></div>`;
     }
+    async function editEvidence(taskId){
+      const latest = taskEvidence(taskId)[0];
+      if(!latest) return;
+      try{
+        await api(`/evidence/${latest._id}/edit`, { method:'PATCH', body:'{}' });
+        editingEvidenceTasks.add(taskId);
+        await loadAll();
+        renderOperations();
+      }catch(error){ alert(error.message); }
+    }
     function renderFiles(latest){
       if(!latest || !latest.files || latest.files.length === 0) return '<div class="muted">No uploaded files yet.</div>';
-      return `<div class="file-list">${latest.files.map((file) => {
+      const files = [...latest.files].sort((a,b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0));
+      const photos = files.filter((file) => file.fileType === 'photo');
+      const otherFiles = files.filter((file) => file.fileType !== 'photo');
+      const canDelete = roleName() === 'Keeper' && (latest.submittedBy?._id || latest.submittedBy) === currentUser?.id && latest.status !== 'approved';
+      const photoTiles = photos.slice(0, 4).map((file, photoIndex) => {
+        const originalIndex = files.findIndex((item) => item._id === file._id);
         const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
-        return `<a class="file-chip" href="${url}" target="_blank"><b>${file.fileType}</b>${file.fileName}</a>`;
-      }).join('')}</div>`;
+        const deleteButton = canDelete ? `<button class="delete-file" title="Delete file" onclick="event.stopPropagation();deleteEvidenceFile('${latest._id}','${file._id}')">&times;</button>` : '';
+        const extraPhotos = photoIndex === 3 && photos.length > 4 ? `<div class="more-overlay">+${photos.length - 4}</div>` : '';
+        return `<button class="evidence-thumb" onclick="openEvidenceViewer('${latest._id}',${originalIndex})">${deleteButton}<img src="${url}" alt="${file.fileName}" onerror="this.parentElement.classList.add('missing-preview');this.replaceWith(document.createTextNode('Photo missing'))">${extraPhotos}</button>`;
+      }).join('');
+      const attachmentCards = otherFiles.map((file) => {
+        const originalIndex = files.findIndex((item) => item._id === file._id);
+        const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
+        const deleteButton = canDelete ? `<button class="delete-file" title="Delete file" onclick="event.stopPropagation();deleteEvidenceFile('${latest._id}','${file._id}')">&times;</button>` : '';
+        const officePreview = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+        const preview = file.fileType === 'pdf' ? `<iframe src="${url}#page=1&toolbar=0&navpanes=0&scrollbar=0" title="${file.fileName}"></iframe>`
+          : file.fileType === 'video' ? `<video src="${url}" muted></video>`
+          : file.fileType === 'document' ? `<iframe src="${officePreview}" title="${file.fileName}"></iframe>`
+          : `<div style="height:145px;display:grid;place-items:center;background:#e8faf8;color:var(--green);font-size:34px;font-weight:900">FILE</div>`;
+        const badge = file.fileType === 'pdf' ? '<span class="file-badge">PDF</span>' : file.fileType === 'document' ? '<span class="file-badge doc">DOC</span>' : `<span class="file-badge doc">${file.fileType.toUpperCase()}</span>`;
+        return `<button class="evidence-thumb attachment-card" onclick="openEvidenceViewer('${latest._id}',${originalIndex})">${deleteButton}<div class="attachment-preview">${preview}</div><div class="attachment-details">${badge}<strong>${file.fileName}</strong><span class="muted">Click to preview full size</span></div></button>`;
+      }).join('');
+      const collageClass = photos.length === 1 ? 'one' : photos.length === 3 ? 'three' : '';
+      return `<div class="evidence-gallery">${photoTiles ? `<div class="photo-collage ${collageClass}">${photoTiles}</div>` : ''}${attachmentCards}</div>`;
+    }
+    let viewerState = null;
+    function openEvidenceViewer(evidenceId, index){
+      const record = evidence.find((item) => item._id === evidenceId);
+      if(!record) return;
+      const files = [...(record.files || [])].sort((a,b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0));
+      viewerState = { evidenceId, files, index };
+      renderEvidenceViewer();
+    }
+    function renderEvidenceViewer(){
+      document.getElementById('evidence-viewer')?.remove();
+      if(!viewerState) return;
+      const file = viewerState.files[viewerState.index];
+      if(!file) return closeEvidenceViewer();
+      const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
+      const downloadUrl = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+      const officePreview = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+      const content = file.fileType === 'photo' ? `<img src="${url}" alt="${file.fileName}">`
+        : file.fileType === 'pdf' ? `<iframe src="${url}#page=1" title="${file.fileName}"></iframe>`
+        : file.fileType === 'video' ? `<video src="${url}" controls autoplay></video>`
+        : file.fileType === 'document' ? `<iframe src="${officePreview}" title="${file.fileName}"></iframe>`
+        : `<div style="text-align:center;color:#fff"><div style="font-size:70px;font-weight:900">FILE</div></div>`;
+      const viewer = document.createElement('div');
+      viewer.id = 'evidence-viewer'; viewer.className = 'viewer';
+      viewer.onclick = (event) => { if(event.target === viewer) closeEvidenceViewer(); };
+      viewer.innerHTML = `<div class="viewer-card"><div class="viewer-head"><div><b>${file.fileName}</b><div class="muted">${viewerState.index + 1} of ${viewerState.files.length}</div></div><div class="row"><a class="btn primary" href="${downloadUrl}" target="_blank" style="text-decoration:none">Download</a><button class="btn secondary viewer-close" onclick="closeEvidenceViewer()">&times;</button></div></div><div class="viewer-body">${content}</div><div class="viewer-foot"><button class="btn secondary" onclick="moveEvidenceViewer(-1)" ${viewerState.files.length < 2 ? 'disabled' : ''}>&#8592; Previous</button><span class="tag blue">${file.fileType}</span><button class="btn secondary" onclick="moveEvidenceViewer(1)" ${viewerState.files.length < 2 ? 'disabled' : ''}>Next &#8594;</button></div></div>`;
+      document.body.appendChild(viewer);
+    }
+    function moveEvidenceViewer(direction){
+      if(!viewerState?.files.length) return;
+      viewerState.index = (viewerState.index + direction + viewerState.files.length) % viewerState.files.length;
+      renderEvidenceViewer();
+    }
+    function closeEvidenceViewer(){ viewerState = null; document.getElementById('evidence-viewer')?.remove(); }
+    function pendingFileType(file){
+      const name = file.name.toLowerCase();
+      if(file.type.startsWith('image/')) return 'photo';
+      if(file.type.startsWith('video/')) return 'video';
+      if(file.type === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+      return 'document';
+    }
+    function selectEvidenceFiles(taskId, fileList){
+      const entries = pendingEvidenceFiles.get(taskId) || [];
+      Array.from(fileList).forEach((file) => {
+        if(entries.some((entry) => entry.file.name === file.name && entry.file.size === file.size && entry.file.lastModified === file.lastModified)) return;
+        entries.push({ id:`pending-${Date.now()}-${Math.random().toString(16).slice(2)}`, file, type:pendingFileType(file), url:URL.createObjectURL(file) });
+      });
+      pendingEvidenceFiles.set(taskId, entries);
+      const input = qs(`files-${taskId}`); if(input) input.value = '';
+      renderPendingFiles(taskId);
+    }
+    function renderPendingFiles(taskId){
+      const box = qs(`pending-files-${taskId}`); if(!box) return;
+      box.innerHTML = (pendingEvidenceFiles.get(taskId) || []).map((entry) => {
+        const preview = entry.type === 'photo' ? `<img src="${entry.url}" alt="${entry.file.name}">`
+          : entry.type === 'video' ? `<video src="${entry.url}" muted></video>`
+          : entry.type === 'pdf' ? `<iframe src="${entry.url}#page=1&toolbar=0&navpanes=0" title="${entry.file.name}"></iframe>`
+          : `<span class="pending-file-icon">DOC</span>`;
+        return `<div class="pending-file"><button class="pending-remove" type="button" title="Remove" onclick="removePendingFile('${taskId}','${entry.id}')">&times;</button><button class="pending-preview" type="button" onclick="openPendingFile('${taskId}','${entry.id}')">${preview}</button><div class="pending-file-info" title="${entry.file.name}">${entry.file.name}</div></div>`;
+      }).join('');
+    }
+    function removePendingFile(taskId, entryId){
+      const entries = pendingEvidenceFiles.get(taskId) || [];
+      const entry = entries.find((item) => item.id === entryId); if(entry) URL.revokeObjectURL(entry.url);
+      const remaining = entries.filter((item) => item.id !== entryId);
+      remaining.length ? pendingEvidenceFiles.set(taskId, remaining) : pendingEvidenceFiles.delete(taskId);
+      renderPendingFiles(taskId);
+    }
+    function openPendingFile(taskId, entryId){
+      const entry = (pendingEvidenceFiles.get(taskId) || []).find((item) => item.id === entryId); if(!entry) return;
+      closeEvidenceViewer();
+      const content = entry.type === 'photo' ? `<img src="${entry.url}" alt="${entry.file.name}">`
+        : entry.type === 'video' ? `<video src="${entry.url}" controls autoplay></video>`
+        : entry.type === 'pdf' ? `<iframe src="${entry.url}#page=1" title="${entry.file.name}"></iframe>`
+        : `<div style="text-align:center;color:#fff"><div style="font-size:70px;font-weight:900">DOC</div><div>${entry.file.name}</div></div>`;
+      const viewer = document.createElement('div'); viewer.id = 'evidence-viewer'; viewer.className = 'viewer';
+      viewer.onclick = (event) => { if(event.target === viewer) closeEvidenceViewer(); };
+      viewer.innerHTML = `<div class="viewer-card"><div class="viewer-head"><b>${entry.file.name}</b><div class="row"><a class="btn primary" href="${entry.url}" download="${entry.file.name}" style="text-decoration:none">Download</a><button class="btn secondary viewer-close" onclick="closeEvidenceViewer()">&times;</button></div></div><div class="viewer-body">${content}</div><div class="viewer-foot"><span class="tag blue">Selected — not uploaded yet</span></div></div>`;
+      document.body.appendChild(viewer);
+    }
+    async function deleteEvidenceFile(evidenceId, fileId){
+      if(!confirm('Delete this uploaded file? This cannot be undone.')) return;
+      try{
+        await api(`/evidence/${evidenceId}/files/${fileId}`, { method:'DELETE' });
+        closeEvidenceViewer();
+        await loadAll();
+        render();
+      }catch(error){ alert(error.message); }
     }
     async function saveEvidence(taskId, submitNow){
+      if(savingEvidenceTasks.has(taskId)) return;
+      savingEvidenceTasks.add(taskId);
+      const message = qs(`evidence-message-${taskId}`);
+      const draftButton = qs(`draft-btn-${taskId}`);
+      const sendButton = qs(`send-btn-${taskId}`);
+      if(message) message.textContent = submitNow ? 'Sending...' : 'Saving draft...';
+      if(draftButton) draftButton.disabled = true;
+      if(sendButton) sendButton.disabled = true;
       const form = new FormData();
       form.append('task', taskId);
       form.append('note', qs(`note-${taskId}`).value);
       form.append('submitNow', submitNow ? 'true' : 'false');
-      Array.from(qs(`files-${taskId}`).files).forEach((file) => form.append('files', file));
-      await fetch(`${API_BASE}/evidence`, { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body:form })
-        .then(async (res) => { if(!res.ok) throw new Error((await res.json()).message); });
-      await loadAll();
-      render();
+      (pendingEvidenceFiles.get(taskId) || []).forEach((entry) => form.append('files', entry.file));
+      try{
+        const latest = taskEvidence(taskId)[0];
+        const url = latest ? `${API_BASE}/evidence/${latest._id}` : `${API_BASE}/evidence`;
+        const method = latest ? 'PATCH' : 'POST';
+        const response = await fetch(url, { method, headers:{ Authorization:`Bearer ${token}` }, body:form });
+        const data = await response.json().catch(() => ({}));
+        if(!response.ok) throw new Error(data.message || 'Could not save evidence.');
+        if(latest && submitNow){
+          const submitResponse = await api(`/evidence/${latest._id}/submit`, { method:'PATCH', body:'{}' });
+        }
+        editingEvidenceTasks.delete(taskId);
+        (pendingEvidenceFiles.get(taskId) || []).forEach((entry) => URL.revokeObjectURL(entry.url));
+        pendingEvidenceFiles.delete(taskId);
+        await loadAll();
+        render();
+      }catch(error){
+        if(message) message.textContent = error.message;
+        if(draftButton) draftButton.disabled = false;
+        if(sendButton) sendButton.disabled = false;
+      }finally{
+        savingEvidenceTasks.delete(taskId);
+      }
     }
     async function changeEvidenceStatus(evidenceId, status){
       if(!evidenceId) return alert('No evidence record found for this task yet.');
       const relatedTask = evidence.find((item) => item._id === evidenceId)?.task;
       const comment = relatedTask ? qs(`comment-${relatedTask._id}`)?.value : '';
+      if(['returned','update_requested'].includes(status) && !comment?.trim()){
+        return alert('Please write a comment explaining what the keeper needs to correct.');
+      }
       await api(`/evidence/${evidenceId}/status`, { method:'PATCH', body:JSON.stringify({ status, comment }) });
       await loadAll();
       render();
@@ -512,6 +795,33 @@ async function completeInviteRegistration(event) {
         .join('')
         .slice(0, 2)
         .toUpperCase();
+    }
+
+    async function renderCalendar(){
+      const monthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+      const monthEnd = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
+      calendarData = await api(`/calendar?from=${encodeURIComponent(monthStart.toISOString())}&to=${encodeURIComponent(monthEnd.toISOString())}`);
+      const firstCell = new Date(monthStart); firstCell.setDate(firstCell.getDate() - firstCell.getDay());
+      const cells = Array.from({length:42}, (_,index) => { const date = new Date(firstCell); date.setDate(date.getDate()+index); return date; });
+      const itemsForDate = (key) => [
+        ...(calendarData.tasks || []).filter((item) => localDateKey(item.dueDate) === key).map((item) => ({...item, kind:'task', at:item.dueDate})),
+        ...(calendarData.reminders || []).filter((item) => localDateKey(item.startAt) === key).map((item) => ({...item, kind:'reminder', at:item.startAt}))
+      ].sort((a,b) => new Date(a.at)-new Date(b.at));
+      const agenda = itemsForDate(calendarSelectedDate);
+      const canAssign = ['Management','Admin','Supervisor'].includes(roleName());
+      const canAddCalendar = userPermissions().includes('calendar.create') || userPermissions().includes('calendar.manage');
+      qs('main').innerHTML = `<div class="topbar"><div><h1>Calendar</h1><div class="muted">Assigned tasks appear automatically. Add personal or team reminders.</div></div><span class="tag green">${roleName()} calendar</span></div>
+        <div class="card"><div class="row space"><button class="btn secondary" onclick="moveCalendarMonth(-1)">&#8592;</button><h2>${monthStart.toLocaleDateString([], {month:'long',year:'numeric'})}</h2><div class="row"><button class="btn secondary" onclick="calendarToday()">Today</button><button class="btn secondary" onclick="moveCalendarMonth(1)">&#8594;</button></div></div>
+          <div class="calendar-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((day)=>`<div class="calendar-weekday">${day}</div>`).join('')}${cells.map((date)=>{const key=localDateKey(date);const items=itemsForDate(key);return `<button class="calendar-day ${date.getMonth()!==monthStart.getMonth()?'outside':''} ${key===calendarSelectedDate?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="calendar-number">${date.getDate()}</div>${items.slice(0,3).map((item)=>`<div class="calendar-dot ${item.kind==='reminder'?'reminder':''}">${new Date(item.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} ${item.title}</div>`).join('')}${items.length>3?`<div class="muted">+${items.length-3} more</div>`:''}</button>`}).join('')}</div></div>
+        <div class="grid g2"><div class="card"><div class="section-title">${new Date(`${calendarSelectedDate}T12:00:00`).toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'})}</div>${agenda.length?agenda.map((item)=>`<div class="info agenda-item ${item.kind==='reminder'?'reminder':''}" style="margin-bottom:10px"><b>${item.kind==='task'?'Assigned task':'Reminder'} · ${new Date(item.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</b><span>${item.title}</span><div class="muted">${item.assignedTo?.fullName||''}${item.status?' · '+statusLabel(item.status):''}</div></div>`).join(''):'<div class="muted">Nothing scheduled for this day.</div>'}</div>
+          ${canAddCalendar ? `<div class="card"><div class="section-title">${canAssign ? 'Add calendar task / reminder' : 'Add my calendar task'}</div><div class="muted" style="margin-bottom:12px">${canAssign ? 'Create it for yourself or assign it to another team member.' : 'Temporary access was granted by your manager. This entry appears on your calendar.'}</div><div class="field"><div class="label">Title</div><input class="input" id="reminder-title"></div><div class="field"><div class="label">Description</div><textarea class="textarea" id="reminder-description"></textarea></div><div class="grid g2"><div class="field"><div class="label">Date</div><input class="input" type="date" id="reminder-date" value="${calendarSelectedDate}"></div><div class="field"><div class="label">Time</div><input class="input" type="time" id="reminder-time"></div></div>${canAssign?`<div class="field"><div class="label">Assign to</div><select class="select" id="reminder-user"><option value="${currentUser.id}">Myself</option>${(options.users||[]).filter((user)=>user._id!==currentUser.id).map((user)=>`<option value="${user._id}">${user.fullName}</option>`).join('')}</select></div>`:''}<div class="field"><div class="label">Repeat</div><select class="select" id="reminder-repeat"><option value="none">No repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="every_2_weeks">Every 2 weeks</option><option value="monthly">Monthly</option></select></div><button class="btn primary" onclick="createCalendarReminder()">Add to calendar</button><span class="error" id="calendar-message"></span></div>` : `<div class="card"><div class="section-title">Calendar access</div><div class="muted">You can view tasks assigned to you. Ask a manager if you temporarily need permission to add your own calendar task.</div></div>`}</div>`;
+    }
+    function selectCalendarDate(key){ calendarSelectedDate=key; renderCalendar(); }
+    function moveCalendarMonth(direction){ calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+direction,1);calendarSelectedDate=localDateKey(calendarMonth);renderCalendar(); }
+    function calendarToday(){ calendarMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);calendarSelectedDate=localDateKey(new Date());renderCalendar(); }
+    async function createCalendarReminder(){
+      const date=qs('reminder-date').value,time=qs('reminder-time').value;
+      try{await api('/calendar/reminders',{method:'POST',body:JSON.stringify({title:qs('reminder-title').value,description:qs('reminder-description').value,startAt:date&&time?new Date(`${date}T${time}:00`).toISOString():null,assignedTo:qs('reminder-user')?.value||currentUser.id,repeat:qs('reminder-repeat').value})});calendarSelectedDate=date;calendarMonth=new Date(`${date}T12:00:00`);await renderCalendar();}catch(error){qs('calendar-message').textContent=error.message;}
     }
 
     function renderProfile(){
@@ -549,7 +859,27 @@ async function completeInviteRegistration(event) {
             ? `<div class="muted" style="margin-top:12px">These permissions come from your role and any extra access given during invitation.</div>`
             : ''}
         </div>
+        ${canInviteUsers() ? `<div class="card"><div class="section-title">Team profiles</div><div class="muted" style="margin-bottom:14px">Open a team member and grant or remove temporary access. Changes take effect the next time their app refreshes.</div><div class="grid g2">${teamUsers.filter((user)=>user.id!==currentUser.id).map((user)=>`<button class="info location-choice" onclick="openTeamProfile('${user.id}')"><b>${user.fullName}</b><span>${user.role?.name || 'No role'} · ${user.email}</span><span style="margin-top:7px">${(user.customPermissions||[]).length} extra permission(s)</span></button>`).join('') || '<div class="muted">No other active team members yet.</div>'}</div></div>` : ''}
       `;
+    }
+
+    function openTeamProfile(userId){
+      const user = teamUsers.find((item)=>item.id===userId); if(!user) return;
+      const hasCalendarCreate = (user.customPermissions||[]).includes('calendar.create');
+      const roleValues = rolePermissionValues(user.role);
+      const viewer = document.createElement('div'); viewer.id='team-profile-viewer'; viewer.className='viewer';
+      viewer.onclick=(event)=>{if(event.target===viewer) closeTeamProfile();};
+      viewer.innerHTML=`<div class="viewer-card" style="height:auto;max-height:90vh"><div class="viewer-head"><div><h2 style="margin:0">${user.fullName}</h2><div class="muted">${user.role?.name||'-'} · ${user.email}</div></div><button class="btn secondary viewer-close" onclick="closeTeamProfile()">&times;</button></div><div style="padding:20px;overflow:auto"><div class="section-title">Role permissions</div><div class="file-list">${roleValues.map((value)=>`<span class="tag blue">${permissionLabel(value)}</span>`).join('')||'<span class="muted">None</span>'}</div><div class="section-title" style="margin-top:22px">Manager-controlled access</div><label class="info" style="display:flex;align-items:flex-start;gap:12px;cursor:pointer"><input type="checkbox" id="team-calendar-create" ${hasCalendarCreate?'checked':''} style="margin-top:5px"><span><b>Add personal calendar tasks</b><span>When enabled, this person can add items to their own calendar. Remove it whenever the temporary access is no longer needed.</span></span></label><div class="row" style="margin-top:18px"><button class="btn primary" onclick="saveTeamPermissions('${user.id}')">Save permissions</button><span class="error" id="team-permission-message"></span></div></div></div>`;
+      document.body.appendChild(viewer);
+    }
+    function closeTeamProfile(){ document.getElementById('team-profile-viewer')?.remove(); }
+    async function saveTeamPermissions(userId){
+      const permissions=qs('team-calendar-create')?.checked?['calendar.create']:[];
+      try{
+        const data=await api(`/users/${userId}/permissions`,{method:'PATCH',body:JSON.stringify({permissions})});
+        teamUsers=teamUsers.map((user)=>user.id===userId?data.user:user);
+        closeTeamProfile(); renderProfile();
+      }catch(error){qs('team-permission-message').textContent=error.message;}
     }
 
     function renderCreateTask(){
@@ -566,7 +896,7 @@ async function completeInviteRegistration(event) {
             <div class="field"><div class="label">Date</div><input class="input" type="date" id="new-date"></div>
             <div class="field"><div class="label">Due time</div><input class="input" type="time" id="new-time"></div>
             <div class="field"><div class="label">Zone</div><select class="select" id="new-zone" onchange="refreshDependentOptions()"><option value="">Select zone</option>${options.zones.map(z=>`<option value="${z._id}">${z.name}</option>`)}</select></div>
-            <div class="field"><div class="label">Enclosure</div><select class="select" id="new-enclosure"></select></div>
+            <div class="field"><div class="label">Enclosure</div><select class="select" id="new-enclosure" onchange="refreshAnimalOptions()"></select></div>
             <div class="field"><div class="label">Animal</div><select class="select" id="new-animal"></select></div>
             <div class="field"><div class="label">Keeper</div><select class="select" id="new-keeper">${options.keepers.map(k=>`<option value="${k._id}">${k.fullName}</option>`)}</select></div>
             <div class="field"><div class="label">Priority</div><select class="select" id="new-priority"><option>normal</option><option>warning</option><option>urgent</option></select></div>
@@ -585,26 +915,30 @@ async function completeInviteRegistration(event) {
           const enclosureName = a.enclosure?.name ? ` - ${a.enclosure.name}` : '';
           return `<option value="${a._id}">${a.name} - ${a.species}${enclosureName}</option>`;
         }).join('');
-        qs('new-enclosure').onchange = refreshDependentOptions;
         return;
       }
       const enclosures = options.enclosures.filter((e) => (e.zone?._id || e.zone) === zoneId);
       qs('new-enclosure').innerHTML = '<option value="">Select enclosure</option>' + enclosures.map((e) => `<option value="${e._id}">${e.name}</option>`).join('');
-      const animals = options.animals || [];
+      refreshAnimalOptions();
+    }
+    function refreshAnimalOptions(){
+      const enclosureId = qs('new-enclosure')?.value;
+      const animals = (options.animals || []).filter((a) => !enclosureId || (a.enclosure?._id || a.enclosure) === enclosureId);
       qs('new-animal').innerHTML = '<option value="">No specific animal</option>' + animals.map((a) => {
         const enclosureName = a.enclosure?.name ? ` - ${a.enclosure.name}` : '';
         return `<option value="${a._id}">${a.name} - ${a.species}${enclosureName}</option>`;
       }).join('');
-      qs('new-enclosure').onchange = refreshDependentOptions;
     }
     async function createTask(){
+      const selectedDate = qs('new-date').value;
+      const selectedTime = qs('new-time').value;
       const payload = {
         title: qs('new-title').value,
         description: qs('new-description').value,
         taskType: qs('new-type').value,
         priority: qs('new-priority').value,
-        dueDate: qs('new-date').value,
-        dueTime: qs('new-time').value,
+        dueDate: selectedDate && selectedTime ? new Date(`${selectedDate}T${selectedTime}:00`).toISOString() : selectedDate,
+        dueTime: selectedTime,
         zone: qs('new-zone').value,
         enclosure: qs('new-enclosure').value,
         animal: qs('new-animal').value || undefined,
@@ -685,7 +1019,8 @@ async function completeInviteRegistration(event) {
               </div>
               <div class="evidence-box">
                 <b>Invite link</b>
-                <div class="muted" style="word-break:break-all">${location.origin}/App3.html?invite=${invite.token || 'hidden-after-refresh'}</div>
+                <div class="muted" style="word-break:break-all">${latestInviteLink?.id === invite._id ? latestInviteLink.url : 'Secure link hidden after refresh'}</div>
+                ${latestInviteLink?.id === invite._id ? `<button class="btn secondary" style="margin-top:10px" onclick="navigator.clipboard.writeText('${latestInviteLink.url}')">Copy invite link</button>` : ''}
               </div>
             </div>
           `).join('') : '<div class="muted">No invitations yet.</div>'}
@@ -733,18 +1068,25 @@ async function completeInviteRegistration(event) {
       }
       try{
         const data = await api('/invitations', { method:'POST', body:JSON.stringify(payload) });
-        qs('invite-message').textContent = `${data.message} Link: ${data.inviteLink}`;
+        latestInviteLink = { id: data.invitation._id, url: data.inviteLink };
         await loadAll();
         renderInviteUsers();
+        qs('invite-message').textContent = data.message;
       }catch(err){
         qs('invite-message').textContent = err.message;
       }
     }
     function renderReview(){
+      const newestByTask = new Map();
+      [...evidence].sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)).forEach((item) => {
+        const taskId = item.task?._id;
+        if(taskId && !newestByTask.has(taskId)) newestByTask.set(taskId, item);
+      });
+      const reviewEvidence = [...newestByTask.values()].filter((item) => item.status !== 'draft');
       qs('main').innerHTML = `
         <div class="topbar"><div><h1>Evidence review</h1><div class="muted">Review submitted keeper evidence and approval status.</div></div></div>
         <div class="card">
-          ${evidence.length ? evidence.map((ev) => `<div class="task">
+          ${reviewEvidence.length ? reviewEvidence.map((ev) => `<div class="task">
             <div>
               <div class="task-title">${ev.task?.title || 'Evidence'}</div>
               <div class="meta">Keeper: ${ev.submittedBy?.fullName || '-'} - ${fmtDate(ev.submittedAt || ev.updatedAt)}</div>

@@ -6,6 +6,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const connectDatabase = require('./config/database');
 const ensureDefaultRoles = require('./utils/ensureDefaultRoles');
+const migrateDatabase = require('./utils/migrateDatabase');
+const ensureDefaultLocations = require('./utils/ensureDefaultLocations');
 
 require('./models');
 
@@ -13,6 +15,9 @@ const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const evidenceRoutes = require('./routes/evidenceRoutes');
 const invitationRoutes = require('./routes/invitationRoutes');
+const fileRoutes = require('./routes/fileRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -32,6 +37,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/evidence', evidenceRoutes);
 app.use('/api/invitations', invitationRoutes);
+app.use('/api/files', fileRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'App3.html')));
@@ -43,11 +51,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.use((error, req, res, next) => {
+  console.error('Unhandled request error:', error);
+  if (res.headersSent) return next(error);
+  res.status(500).json({ message: error.message || 'Unexpected server error.' });
+});
+
 const port = process.env.PORT || 5000;
 
 connectDatabase()
   .then(async () => {
+    await migrateDatabase();
     await ensureDefaultRoles();
+    await ensureDefaultLocations();
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
     });

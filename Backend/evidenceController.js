@@ -1,0 +1,417 @@
+const Evidence = require('../models/Evidence');
+const Task = require('../models/Task');
+const { hasPermission } = require('../middleware/permissionMiddleware');
+const { fileToEvidenceFile, getBucket } = require('../middleware/uploadMiddleware');
+const mongoose = require('mongoose');
+const fs = require('fs/promises');
+const path = require('path');
+
+const evidencePopulate = [
+  {
+    path: 'task',
+    populate: [
+      { path: 'assignedTo', select: 'fullName email jobTitle' },
+      { path: 'createdBy', select: 'fullName email jobTitle' },
+      { path: 'animal', select: 'name species' },
+      { path: 'enclosure', select: 'name type' },
+      { path: 'zone', select: 'name description' }
+    ]
+  },
+  { path: 'submittedBy', select: 'fullName email jobTitle' },
+  { path: 'files.uploadedBy', select: 'fullName email jobTitle' }
+];
+
+function getRoleName(user) {
+  return user.role && user.role.name ? user.role.name : '';
+}
+
+function normalizeFiles(files, userId) {
+  if (!Array.isArray(files)) {
+    return [];
+  }
+
+  return files.map((file) => ({
+    fileType: file.fileType || 'other',
+    fileName: file.fileName,
+    url: file.url,
+    storageKey: file.storageKey,
+    uploadedBy: userId
+  }));
+}
+
+function parseBoolean(value) {
+  return value === true || value === 'true';
+}
+
+function parseJsonArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+async function getRequestFiles(req) {
+  const metadataFiles = normalizeFiles(parseJsonArray(req.body.files), req.user._id);
+  const uploadedFiles = Array.isArray(req.files)
+    ? await Promise.all(req.files.map((file) => fileToEvidenceFile(file, req.user._id, req)))
+    : [];
+
+  return [...metadataFiles, ...uploadedFiles];
+}
+
+async function listEvidence(req, res) {
+  const roleName = getRoleName(req.user);
+  const filter = {};
+
+  if (req.query.status) {
+    filter.status = req.query.status;
+  }
+
+  if (req.query.task) {
+    filter.task = req.query.task;
+  }
+
+  if (roleName === 'Keeper') {
+    filter.submittedBy = req.user._id;
+  }
+
+  const evidence = await Evidence.find(filter)
+    .populate(evidencePopulate)
+    .sort({ updatedAt: -1 });
+
+  res.json({
+    count: evidence.length,
+    evidence
+  });
+}
+
+async function getEvidenceById(req, res) {
+  const evidence = await Evidence.findById(req.params.id).populate(evidencePopulate);
+
+  if (!evidence) {
+    return res.status(404).json({ message: 'Evidence not found.' });
+  }
+
+  const roleName = getRoleName(req.user);
+  const isKeeperOwner = evidence.submittedBy._id.toString() === req.user._id.toString();
+
+  if (roleName === 'Keeper' && !isKeeperOwner) {
+    return res.status(403).json({ message: 'You can only view your own evidence.' });
+  }
+
+  res.json({ evidence });
+}
+
+async function createEvidence(req, res) {
+  const { task: taskId, note } = req.body;
+  const submitNow = parseBoolean(req.body.submitNow);
+
+  if (!taskId) {
+    return res.status(400).json({ message: 'Task id is required.' });
+  }
+
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    return res.status(404).json({ message: 'Task not found.' });
+  }
+
+  const roleName = getRoleName(req.user);
+  const isAssignedKeeper = task.assignedTo.toString() === req.user._id.toString();
+
+  if (roleName === 'Keeper' && !isAssignedKeeper) {
+    return res.status(403).json({ message: 'You can only submit evidence for your assigned tasks.' });
+  }
+
+  const existing = await Evidence.findOne({ task: task._id, submittedBy: req.user._id }).sort({ updatedAt: -1 });
+  if (existing) {
+    if (existing.status === 'approved') {
+      return res.status(409).json({ message: 'This evidence is already approved and cannot be resubmitted.' });
+    }
+    if (note !== undefined) existing.note = note;
+    const newFiles = await getRequestFiles(req);
+    if (newFiles.length) existing.files.push(...newFiles);
+    existing.status = submitNow ? 'submitted' : 'draft';
+    existing.submittedAt = submitNow ? new Date() : existing.submittedAt;
+    task.keeperNote = note;
+    task.status = submitNow ? 'submitted' : 'draft';
+    if (submitNow) task.submittedAt = new Date();
+    await Promise.all([existing.save(), task.save()]);
+    return res.json({
+      message: submitNow ? 'Evidence updated and sent for approval.' : 'Draft updated.',
+      evidence: await Evidence.findById(existing._id).populate(evidencePopulate)
+    });
+  }
+
+  const evidenceStatus = submitNow ? 'submitted' : 'draft';
+  const evidence = await Evidence.create({
+    task: task._id,
+    note,
+    files: await getRequestFiles(req),
+    status: evidenceStatus,
+    submittedBy: req.user._id,
+    submittedAt: submitNow ? new Date() : undefined
+  });
+
+  task.keeperNote = note;
+  task.status = submitNow ? 'submitted' : 'draft';
+
+  if (submitNow) {
+    task.submittedAt = new Date();
+    task.approvalHistory.push({
+      action: 'submitted',
+      by: req.user._id,
+      comment: note
+    });
+  }
+
+  await task.save();
+
+  const populatedEvidence = await Evidence.findById(evidence._id).populate(evidencePopulate);
+
+  res.status(201).json({
+    message: submitNow ? 'Evidence submitted for review.' : 'Evidence saved as draft.',
+    evidence: populatedEvidence
+  });
+}
+
+async function updateEvidence(req, res) {
+  const { note } = req.body;
+
+  const evidence = await Evidence.findById(req.params.id);
+
+  if (!evidence) {
+    return res.status(404).json({ message: 'Evidence not found.' });
+  }
+
+  const roleName = getRoleName(req.user);
+  const isKeeperOwner = evidence.submittedBy.toString() === req.user._id.toString();
+
+  if (roleName === 'Keeper' && !isKeeperOwner) {
+    return res.status(403).json({ message: 'You can only edit your own evidence.' });
+  }
+
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence cannot be edited.' });
+  }
+
+  if (note !== undefined) {
+    evidence.note = note;
+  }
+
+  const requestFiles = await getRequestFiles(req);
+  if (requestFiles.length > 0) {
+    evidence.files.push(...requestFiles);
+  }
+
+  evidence.status = 'draft';
+
+  await evidence.save();
+
+  const task = await Task.findById(evidence.task);
+  if (task && note !== undefined) {
+    task.keeperNote = note;
+    task.status = 'draft';
+    await task.save();
+  }
+
+  const populatedEvidence = await Evidence.findById(evidence._id).populate(evidencePopulate);
+
+  res.json({
+    message: 'Evidence updated.',
+    evidence: populatedEvidence
+  });
+}
+
+async function submitEvidence(req, res) {
+  const evidence = await Evidence.findById(req.params.id);
+
+  if (!evidence) {
+    return res.status(404).json({ message: 'Evidence not found.' });
+  }
+
+  const roleName = getRoleName(req.user);
+  const isKeeperOwner = evidence.submittedBy.toString() === req.user._id.toString();
+
+  if (roleName === 'Keeper' && !isKeeperOwner) {
+    return res.status(403).json({ message: 'You can only submit your own evidence.' });
+  }
+
+  if (evidence.status === 'submitted') {
+    return res.status(409).json({ message: 'This evidence was already sent. Choose Edit submission before sending again.' });
+  }
+
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence cannot be resubmitted.' });
+  }
+
+  evidence.status = 'submitted';
+  evidence.submittedAt = new Date();
+  await evidence.save();
+
+  const task = await Task.findById(evidence.task);
+  if (task) {
+    task.status = 'submitted';
+    task.submittedAt = new Date();
+    task.approvalHistory.push({
+      action: 'submitted',
+      by: req.user._id,
+      comment: evidence.note
+    });
+    await task.save();
+  }
+
+  const populatedEvidence = await Evidence.findById(evidence._id).populate(evidencePopulate);
+
+  res.json({
+    message: 'Evidence submitted for review.',
+    evidence: populatedEvidence
+  });
+}
+
+async function updateEvidenceStatus(req, res) {
+  const { status, comment } = req.body;
+
+  const allowedStatuses = ['approved', 'update_requested', 'returned'];
+
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Invalid evidence status.' });
+  }
+
+  if ((status === 'update_requested' || status === 'returned') && !String(comment || '').trim()) {
+    return res.status(400).json({ message: 'A comment is required when rejecting or returning evidence.' });
+  }
+
+  if (status === 'approved' && !hasPermission(req.user, 'evidence', 'approve')) {
+    return res.status(403).json({ message: 'You do not have permission to approve evidence.' });
+  }
+
+  if ((status === 'update_requested' || status === 'returned') && !hasPermission(req.user, 'evidence', 'return')) {
+    return res.status(403).json({ message: 'You do not have permission to return evidence.' });
+  }
+
+  const evidence = await Evidence.findById(req.params.id);
+
+  if (!evidence) {
+    return res.status(404).json({ message: 'Evidence not found.' });
+  }
+
+  evidence.status = status;
+  await evidence.save();
+
+  const task = await Task.findById(evidence.task);
+  const roleName = getRoleName(req.user);
+
+  if (task) {
+    if (status === 'approved') {
+      task.status = roleName === 'Management' ? 'manager_approved' : 'supervisor_approved';
+      if (roleName === 'Management') {
+        task.managerApprovedAt = new Date();
+      } else {
+        task.supervisorApprovedAt = new Date();
+      }
+      task.approvalHistory.push({
+        action: roleName === 'Management' ? 'manager_approved' : 'approved_by_supervisor',
+        by: req.user._id,
+        comment
+      });
+    }
+
+    if (status === 'update_requested') {
+      task.status = 'update_requested';
+      task.supervisorComment = comment;
+      task.approvalHistory.push({
+        action: 'update_requested',
+        by: req.user._id,
+        comment
+      });
+    }
+
+    if (status === 'returned') {
+      task.status = 'manager_returned';
+      task.managerComment = comment;
+      task.approvalHistory.push({
+        action: 'returned_by_manager',
+        by: req.user._id,
+        comment
+      });
+    }
+
+    await task.save();
+  }
+
+  const populatedEvidence = await Evidence.findById(evidence._id).populate(evidencePopulate);
+
+  res.json({
+    message: 'Evidence status updated.',
+    evidence: populatedEvidence
+  });
+}
+
+async function beginEditEvidence(req, res) {
+  const evidence = await Evidence.findById(req.params.id);
+  if (!evidence) return res.status(404).json({ message: 'Evidence not found.' });
+  if (evidence.submittedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'You can only edit your own evidence.' });
+  }
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence cannot be edited.' });
+  }
+  evidence.status = 'draft';
+  await evidence.save();
+  await Task.updateOne({ _id: evidence.task }, { status: 'draft' });
+  return res.json({ message: 'Submission moved to draft. It is hidden from review until you send it again.' });
+}
+
+async function deleteEvidenceFile(req, res) {
+  const evidence = await Evidence.findById(req.params.id);
+  if (!evidence) return res.status(404).json({ message: 'Evidence not found.' });
+  if (evidence.submittedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'Only the keeper who submitted this evidence can delete its files.' });
+  }
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence files cannot be deleted.' });
+  }
+  const file = evidence.files.id(req.params.fileId);
+  if (!file) return res.status(404).json({ message: 'Evidence file not found.' });
+
+  if (file.storageKey) {
+    if (mongoose.isValidObjectId(file.storageKey) && file.url.includes('/api/files/')) {
+      await getBucket().delete(new mongoose.Types.ObjectId(file.storageKey)).catch((error) => {
+        if (error.code !== 26) throw error;
+      });
+    } else {
+      const uploadRoot = path.resolve(__dirname, '..', '..', 'uploads');
+      const filePath = path.resolve(uploadRoot, file.storageKey);
+      if (filePath.startsWith(`${uploadRoot}${path.sep}`)) {
+        await fs.unlink(filePath).catch((error) => {
+          if (error.code !== 'ENOENT') throw error;
+        });
+      }
+    }
+  }
+  evidence.files.pull(file._id);
+  await evidence.save();
+  return res.json({ message: 'Evidence file deleted.' });
+}
+
+module.exports = {
+  listEvidence,
+  getEvidenceById,
+  createEvidence,
+  updateEvidence,
+  submitEvidence,
+  beginEditEvidence,
+  updateEvidenceStatus,
+  deleteEvidenceFile
+};

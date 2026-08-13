@@ -1,6 +1,7 @@
 const Task = require('../models/Task');
 const { User, Role, Zone, Enclosure, Animal } = require('../models');
 const ensureDefaultRoles = require('../utils/ensureDefaultRoles');
+const ensureDefaultLocations = require('../utils/ensureDefaultLocations');
 
 const taskPopulate = [
   { path: 'assignedTo', select: 'fullName email jobTitle' },
@@ -39,6 +40,10 @@ function buildTaskFilter(user, query) {
     };
   }
 
+  if (roleName !== 'Keeper' && !query.status && !(roleName === 'Management' && query.managerQueue === 'true')) {
+    filter.status = { $ne: 'draft' };
+  }
+
   return filter;
 }
 
@@ -59,10 +64,11 @@ async function getTaskOptions(req, res) {
   // Guarantee that the invite dropdown always has every system role, even when
   // an older production database originally contained only Management.
   await ensureDefaultRoles();
+  await ensureDefaultLocations();
   const [keepers, users, roles, zones, enclosures, animals] = await Promise.all([
     User.find({ active: true }).populate({ path: 'role', match: { name: 'Keeper' } }).select('fullName email role'),
     User.find({ active: true }).populate('role').select('fullName email role'),
-    Role.find().sort({ name: 1 }), Zone.find().sort({ name: 1 }), Enclosure.find().sort({ name: 1 }), Animal.find().sort({ name: 1 })
+    Role.find().sort({ name: 1 }), Zone.find().sort({ name: 1 }), Enclosure.find().populate('zone').sort({ name: 1 }), Animal.find({ active: true }).populate('enclosure').sort({ name: 1 })
   ]);
   res.json({ keepers: keepers.filter((user) => user.role), users, roles, zones, enclosures, animals });
 }
@@ -70,7 +76,10 @@ async function getTaskOptions(req, res) {
 async function createTask(req, res) {
   const required = ['title', 'assignedTo', 'dueDate'];
   if (required.some((key) => !req.body[key])) return res.status(400).json({ message: 'Title, assignee, and due date are required.' });
-  const task = await Task.create({ ...req.body, createdBy: req.user._id, status: 'assigned', approvalHistory: [{ action: 'created', by: req.user._id }] });
+  const dueDate = req.body.dueTime && /^\d{4}-\d{2}-\d{2}$/.test(req.body.dueDate)
+    ? new Date(`${req.body.dueDate}T${req.body.dueTime}:00`)
+    : new Date(req.body.dueDate);
+  const task = await Task.create({ ...req.body, dueDate, createdBy: req.user._id, status: 'assigned', approvalHistory: [{ action: 'created', by: req.user._id }] });
   res.status(201).json({ message: 'Task created.', task: await Task.findById(task._id).populate(taskPopulate) });
 }
 

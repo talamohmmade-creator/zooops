@@ -133,6 +133,26 @@ async function createEvidence(req, res) {
     return res.status(403).json({ message: 'You can only submit evidence for your assigned tasks.' });
   }
 
+  const existing = await Evidence.findOne({ task: task._id, submittedBy: req.user._id }).sort({ updatedAt: -1 });
+  if (existing) {
+    if (existing.status === 'approved') {
+      return res.status(409).json({ message: 'This evidence is already approved and cannot be resubmitted.' });
+    }
+    if (note !== undefined) existing.note = note;
+    const newFiles = await getRequestFiles(req);
+    if (newFiles.length) existing.files.push(...newFiles);
+    existing.status = submitNow ? 'submitted' : 'draft';
+    existing.submittedAt = submitNow ? new Date() : existing.submittedAt;
+    task.keeperNote = note;
+    task.status = submitNow ? 'submitted' : 'draft';
+    if (submitNow) task.submittedAt = new Date();
+    await Promise.all([existing.save(), task.save()]);
+    return res.json({
+      message: submitNow ? 'Evidence updated and sent for approval.' : 'Draft updated.',
+      evidence: await Evidence.findById(existing._id).populate(evidencePopulate)
+    });
+  }
+
   const evidenceStatus = submitNow ? 'submitted' : 'draft';
   const evidence = await Evidence.create({
     task: task._id,
@@ -181,6 +201,10 @@ async function updateEvidence(req, res) {
     return res.status(403).json({ message: 'You can only edit your own evidence.' });
   }
 
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence cannot be edited.' });
+  }
+
   if (note !== undefined) {
     evidence.note = note;
   }
@@ -190,11 +214,14 @@ async function updateEvidence(req, res) {
     evidence.files.push(...requestFiles);
   }
 
+  evidence.status = 'draft';
+
   await evidence.save();
 
   const task = await Task.findById(evidence.task);
   if (task && note !== undefined) {
     task.keeperNote = note;
+    task.status = 'draft';
     await task.save();
   }
 
@@ -218,6 +245,14 @@ async function submitEvidence(req, res) {
 
   if (roleName === 'Keeper' && !isKeeperOwner) {
     return res.status(403).json({ message: 'You can only submit your own evidence.' });
+  }
+
+  if (evidence.status === 'submitted') {
+    return res.status(409).json({ message: 'This evidence was already sent. Choose Edit submission before sending again.' });
+  }
+
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence cannot be resubmitted.' });
   }
 
   evidence.status = 'submitted';

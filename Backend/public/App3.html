@@ -163,10 +163,18 @@
       'calendar.create': 'Add personal calendar tasks',
       'calendar.manage': 'Manage calendar'
     };
+    const assignablePermissions = [
+      'tasks.create','tasks.read','tasks.update','tasks.assign','tasks.approve','tasks.return','tasks.manage',
+      'evidence.create','evidence.read','evidence.update','evidence.upload','evidence.approve','evidence.return','evidence.manage',
+      'calendar.create','calendar.read','calendar.update','calendar.delete','calendar.manage',
+      'animals.create','animals.read','animals.update','animals.manage','enclosures.create','enclosures.read','enclosures.update','enclosures.manage',
+      'comments.create','comments.read','comments.update','comments.delete','mentions.create','mentions.read','mentions.escalate',
+      'reports.read','reports.create','reports.manage','users.create','users.read','users.update','users.manage'
+    ];
 
     function roleName(){ return currentUser?.role?.name || currentUser?.role || ''; }
     function canCreateTask(){ return userPermissions().includes('tasks.create') || userPermissions().includes('tasks.manage'); }
-    function canReview(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
+    function canReview(){ return userPermissions().some((value)=>['evidence.approve','evidence.return','evidence.manage'].includes(value)); }
     function canSubmitEvidence(){ return roleName() === 'Keeper'; }
     function userPermissions(){
       const rolePermissions = (currentUser?.role?.permissions || []).flatMap((permission) => {
@@ -881,26 +889,37 @@ async function completeInviteRegistration(event) {
 
     function openTeamProfile(userId){
       const user = teamUsers.find((item)=>item.id===userId); if(!user) return;
-      const hasCalendarCreate = (user.customPermissions||[]).includes('calendar.create');
-      const temporaryGrant = (user.temporaryPermissions||[]).find((grant)=>grant.permission==='calendar.create');
       const roleValues = (user.role?.permissions||[]).flatMap((permission)=>(permission.actions||[]).map((action)=>`${permission.resource}.${action}`));
       const extraValues = (user.customPermissions||[]).filter((value)=>!roleValues.includes(value));
+      const temporaryMap = new Map((user.temporaryPermissions||[]).map((grant)=>[grant.permission,grant]));
+      const availableValues = assignablePermissions.filter((value)=>!roleValues.includes(value)&&!extraValues.includes(value));
       const viewer = document.createElement('div'); viewer.id='team-profile-viewer'; viewer.className='viewer';
       viewer.onclick=(event)=>{if(event.target===viewer) closeTeamProfile();};
-      viewer.innerHTML=`<div class="viewer-card" style="height:auto;max-height:90vh"><div class="viewer-head"><div><h2 style="margin:0">${user.fullName}</h2><div class="muted">${user.role?.name||'-'} · ${user.email}</div></div><button class="btn secondary viewer-close" onclick="closeTeamProfile()">&times;</button></div><div style="padding:20px;overflow:auto"><div class="section-title">All role permissions</div><div class="file-list">${roleValues.map((value)=>`<span class="tag blue">${permissionLabel(value)}</span>`).join('')||'<span class="muted">None</span>'}</div><div class="section-title" style="margin-top:20px">Extra permissions</div><div class="file-list">${extraValues.map((value)=>`<span class="tag green">${permissionLabel(value)}${temporaryGrant&&value==='calendar.create'?' · until '+new Date(temporaryGrant.expiresAt).toLocaleString():''}</span>`).join('')||'<span class="muted">No extra permissions.</span>'}</div><div class="section-title" style="margin-top:22px">Change access</div><div class="field"><div class="label">Add personal calendar tasks</div><select class="select" id="team-calendar-access"><option value="none" ${!hasCalendarCreate?'selected':''}>No access</option><option value="today" ${temporaryGrant?'selected':''}>Today only (expires automatically)</option><option value="ongoing" ${hasCalendarCreate&&!temporaryGrant?'selected':''}>Ongoing until manager removes it</option></select></div><div class="muted">Choose No access at any time to remove this extra permission immediately.</div><div class="row" style="margin-top:18px"><button class="btn primary" onclick="saveTeamPermissions('${user.id}')">Save permissions</button><span class="error" id="team-permission-message"></span></div></div></div>`;
+      const extraRows = extraValues.map((value)=>{const grant=temporaryMap.get(value);return `<div class="info row space"><span><b>${permissionLabel(value)}</b><span>${grant?'Today only · expires '+new Date(grant.expiresAt).toLocaleString():'Ongoing'}</span></span><button class="btn danger" onclick="removeTeamPermission('${user.id}','${value}')">Remove</button></div>`}).join('') || '<div class="muted">No extra permissions.</div>';
+      const permissionOptions = availableValues.map((value)=>`<option value="${value}">${permissionLabel(value)}</option>`).join('') || '<option value="">No more permissions available</option>';
+      viewer.innerHTML=`<div class="viewer-card" style="height:auto;max-height:90vh"><div class="viewer-head"><div><h2 style="margin:0">${user.fullName}</h2><div class="muted">${user.role?.name||'-'} · ${user.email}</div></div><button class="btn secondary viewer-close" onclick="closeTeamProfile()">&times;</button></div><div style="padding:20px;overflow:auto"><div class="section-title">All role permissions</div><div class="file-list">${roleValues.map((value)=>`<span class="tag blue">${permissionLabel(value)}</span>`).join('')||'<span class="muted">None</span>'}</div><div class="muted">Role permissions cannot be removed here.</div><div class="section-title" style="margin-top:20px">Extra permissions</div><div style="display:grid;gap:9px">${extraRows}</div><div class="section-title" style="margin-top:22px">Grant another permission</div><div class="grid g2"><div class="field"><div class="label">Permission</div><select class="select" id="team-new-permission">${permissionOptions}</select></div><div class="field"><div class="label">Duration</div><select class="select" id="team-new-duration"><option value="today">Today only</option><option value="ongoing">Ongoing until removed</option></select></div></div><div class="row"><button class="btn primary" onclick="addTeamPermission('${user.id}')" ${availableValues.length?'':'disabled'}>Grant permission</button><span class="error" id="team-permission-message"></span></div></div></div>`;
       document.body.appendChild(viewer);
     }
     function closeTeamProfile(){ document.getElementById('team-profile-viewer')?.remove(); }
-    async function saveTeamPermissions(userId){
-      const access=qs('team-calendar-access')?.value||'none';
-      const permissions=access==='ongoing'?['calendar.create']:[];
-      const endOfToday=new Date(); endOfToday.setHours(23,59,59,999);
-      const temporaryPermissions=access==='today'?[{permission:'calendar.create',expiresAt:endOfToday.toISOString()}]:[];
+    async function persistTeamPermissions(userId,permissions,temporaryPermissions){
       try{
         const data=await api(`/users/${userId}/permissions`,{method:'PATCH',body:JSON.stringify({permissions,temporaryPermissions})});
         teamUsers=teamUsers.map((user)=>user.id===userId?data.user:user);
-        closeTeamProfile(); renderProfile();
+        closeTeamProfile(); renderProfile(); openTeamProfile(userId);
       }catch(error){qs('team-permission-message').textContent=error.message;}
+    }
+    function addTeamPermission(userId){
+      const user=teamUsers.find((item)=>item.id===userId);const value=qs('team-new-permission')?.value;if(!user||!value)return;
+      const temporary=(user.temporaryPermissions||[]).map((grant)=>({permission:grant.permission,expiresAt:grant.expiresAt}));
+      const ongoing=(user.customPermissions||[]).filter((permission)=>!temporary.some((grant)=>grant.permission===permission));
+      if(qs('team-new-duration').value==='today'){const end=new Date();end.setHours(23,59,59,999);temporary.push({permission:value,expiresAt:end.toISOString()});}else ongoing.push(value);
+      persistTeamPermissions(userId,[...new Set(ongoing)],temporary);
+    }
+    function removeTeamPermission(userId,value){
+      const user=teamUsers.find((item)=>item.id===userId);if(!user)return;
+      const temporary=(user.temporaryPermissions||[]).filter((grant)=>grant.permission!==value).map((grant)=>({permission:grant.permission,expiresAt:grant.expiresAt}));
+      const ongoing=(user.customPermissions||[]).filter((permission)=>permission!==value&&!temporary.some((grant)=>grant.permission===permission));
+      persistTeamPermissions(userId,ongoing,temporary);
     }
 
     function renderCreateTask(){

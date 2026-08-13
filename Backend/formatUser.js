@@ -1,4 +1,5 @@
 function formatUser(user) {
+  const activeTemporaryPermissions = (user.temporaryPermissions || []).filter((grant) => grant.expiresAt > new Date());
   return {
     id: user._id,
     fullName: user.fullName,
@@ -15,7 +16,8 @@ function formatUser(user) {
       : null,
     assignedZones: user.assignedZones || [],
     assignedEnclosures: user.assignedEnclosures || [],
-    customPermissions: user.customPermissions || []
+    customPermissions: [...new Set([...(user.customPermissions || []), ...activeTemporaryPermissions.map((grant) => grant.permission)])],
+    temporaryPermissions: activeTemporaryPermissions
   };
 }
 

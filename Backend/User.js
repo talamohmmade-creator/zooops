@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema(
       }
     ],
     customPermissions: { type: [String], default: [] }
+    ,temporaryPermissions: [{
+      permission: { type: String, required: true },
+      expiresAt: { type: Date, required: true }
+    }]
   },
   { timestamps: true }
 );

@@ -2,6 +2,7 @@ function hasPermission(user, resource, action) {
   const permissions = user.role && user.role.permissions ? user.role.permissions : [];
 
   if ((user.customPermissions || []).some((value) => value === `${resource}.${action}` || value === `${resource}.manage`)) return true;
+  if ((user.temporaryPermissions || []).some((grant) => grant.expiresAt > new Date() && (grant.permission === `${resource}.${action}` || grant.permission === `${resource}.manage`))) return true;
 
   return permissions.some((permission) => {
     const sameResource = permission.resource === resource;

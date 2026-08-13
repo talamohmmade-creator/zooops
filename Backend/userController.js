@@ -13,9 +13,13 @@ async function updatePermissions(req, res) {
   const user = await User.findById(req.params.id).populate('role');
   if (!user) return res.status(404).json({ message: 'Team member not found.' });
   const permissions = Array.isArray(req.body.permissions) ? req.body.permissions : [];
+  const temporaryPermissions = Array.isArray(req.body.temporaryPermissions) ? req.body.temporaryPermissions : [];
   if (permissions.some((value) => !allowedCustomPermissions.has(value))) return res.status(400).json({ message: 'One or more permissions are not allowed.' });
+  if (temporaryPermissions.some((grant) => !allowedCustomPermissions.has(grant.permission) || !grant.expiresAt || Number.isNaN(new Date(grant.expiresAt).getTime()))) return res.status(400).json({ message: 'One or more temporary permissions are invalid.' });
   const preservedPermissions = (user.customPermissions || []).filter((value) => !allowedCustomPermissions.has(value));
   user.customPermissions = [...new Set([...preservedPermissions, ...permissions])];
+  const preservedTemporary = (user.temporaryPermissions || []).filter((grant) => !allowedCustomPermissions.has(grant.permission));
+  user.temporaryPermissions = [...preservedTemporary, ...temporaryPermissions.map((grant) => ({ permission: grant.permission, expiresAt: new Date(grant.expiresAt) }))];
   await user.save();
   await user.populate('role');
   res.json({ message: 'Permissions updated.', user: formatUser(user) });

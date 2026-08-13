@@ -358,6 +358,21 @@ async function updateEvidenceStatus(req, res) {
   });
 }
 
+async function beginEditEvidence(req, res) {
+  const evidence = await Evidence.findById(req.params.id);
+  if (!evidence) return res.status(404).json({ message: 'Evidence not found.' });
+  if (evidence.submittedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'You can only edit your own evidence.' });
+  }
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence cannot be edited.' });
+  }
+  evidence.status = 'draft';
+  await evidence.save();
+  await Task.updateOne({ _id: evidence.task }, { status: 'draft' });
+  return res.json({ message: 'Submission moved to draft. It is hidden from review until you send it again.' });
+}
+
 async function deleteEvidenceFile(req, res) {
   const evidence = await Evidence.findById(req.params.id);
   if (!evidence) return res.status(404).json({ message: 'Evidence not found.' });
@@ -396,6 +411,7 @@ module.exports = {
   createEvidence,
   updateEvidence,
   submitEvidence,
+  beginEditEvidence,
   updateEvidenceStatus,
   deleteEvidenceFile
 };

@@ -18,6 +18,7 @@ const invitationRoutes = require('./routes/invitationRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
 const userRoutes = require('./routes/userRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/comments', commentRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'App3.html')));

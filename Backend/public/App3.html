@@ -55,6 +55,9 @@
     .file-chip b{display:block;color:var(--green)}.section-title{font-size:18px;font-weight:800;margin-bottom:12px}
     .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
     .stat.active-filter{border:2px solid var(--green);background:#e8faf8;box-shadow:0 10px 22px rgba(22,166,160,.14)}
+    .location-choice{text-align:left;cursor:pointer;color:var(--text);font:inherit;min-height:88px;transition:.15s ease}
+    .location-choice:hover{border-color:var(--green);background:#e8faf8;transform:translateY(-1px)}
+    .location-choice b{font-size:18px;margin-bottom:8px}.location-choice span{display:block;color:var(--dim)}
     .profile-head{display:flex;align-items:center;gap:16px}
     .avatar{width:74px;height:74px;border-radius:50%;background:#e8faf8;border:2px solid var(--green);display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--green)}
     @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid,.main>.grid{grid-template-columns:1fr!important}}
@@ -122,6 +125,8 @@
     let currentView = 'operations';
     let taskFilter = 'all';
     let selectedTaskDate = localDateKey(new Date());
+    let selectedZoneId = '';
+    let selectedEnclosureId = '';
     const permissionLabels = {
       'tasks.read': 'View tasks',
       'tasks.create': 'Create tasks',
@@ -424,16 +429,38 @@ async function completeInviteRegistration(event) {
     }
     function renderOperations(){
       const dateTasks = tasks.filter((task) => task.dueDate && localDateKey(task.dueDate) === selectedTaskDate);
-      const total = dateTasks.length;
+      const locationTasks = selectedEnclosureId
+        ? dateTasks.filter((task) => (task.enclosure?._id || task.enclosure) === selectedEnclosureId)
+        : dateTasks;
+      const total = locationTasks.length;
       const approvedStatuses = ['supervisor_approved','manager_approved','completed'];
       const rejectedStatuses = ['update_requested','manager_returned','cancelled'];
-      const approved = dateTasks.filter((task) => approvedStatuses.includes(task.status));
-      const rejected = dateTasks.filter((task) => rejectedStatuses.includes(task.status));
-      const pending = dateTasks.filter((task) => !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
+      const approved = locationTasks.filter((task) => approvedStatuses.includes(task.status));
+      const rejected = locationTasks.filter((task) => rejectedStatuses.includes(task.status));
+      const pending = locationTasks.filter((task) => !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
       const filteredTasks = taskFilter === 'approved' ? approved
         : taskFilter === 'rejected' ? rejected
         : taskFilter === 'pending' ? pending
-        : dateTasks;
+        : locationTasks;
+      const selectedZone = options.zones.find((zone) => zone._id === selectedZoneId);
+      const selectedEnclosure = options.enclosures.find((enclosure) => enclosure._id === selectedEnclosureId);
+      const zoneEnclosures = options.enclosures.filter((enclosure) => (enclosure.zone?._id || enclosure.zone) === selectedZoneId);
+      const zonePicker = `<div class="card"><div class="section-title">Choose a zone</div><div class="grid g3">${options.zones.map((zone) => {
+        const count = dateTasks.filter((task) => (task.zone?._id || task.zone) === zone._id).length;
+        return `<button class="info location-choice" onclick="selectTaskZone('${zone._id}')"><b>${zone.name}</b><span>${count} task${count === 1 ? '' : 's'} on this date</span></button>`;
+      }).join('') || '<div class="muted">No zones available.</div>'}</div></div>`;
+      const enclosurePicker = `<div class="card"><div class="row space"><div><div class="muted">${selectedZone?.name || 'Zone'}</div><div class="section-title">Choose an enclosure</div></div><button class="btn secondary" onclick="showTaskZones()">&#8592; All zones</button></div><div class="grid g3">${zoneEnclosures.map((enclosure) => {
+        const count = dateTasks.filter((task) => (task.enclosure?._id || task.enclosure) === enclosure._id).length;
+        return `<button class="info location-choice" onclick="selectTaskEnclosure('${enclosure._id}')"><b>${enclosure.name}</b><span>${count} task${count === 1 ? '' : 's'} on this date</span></button>`;
+      }).join('') || '<div class="muted">No enclosures are configured for this zone.</div>'}</div></div>`;
+      const taskView = `<div class="row" style="margin-bottom:14px"><button class="btn secondary" onclick="showTaskEnclosures()">&#8592; ${selectedZone?.name || 'Enclosures'}</button><span class="tag blue">${selectedZone?.name || ''} / ${selectedEnclosure?.name || ''}</span></div>
+        <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+          <button class="stat ${taskFilter === 'all' ? 'active-filter' : ''}" onclick="setTaskFilter('all')" style="text-align:left;cursor:pointer"><div class="stat-num">${total}</div><div class="muted">All tasks</div></button>
+          <button class="stat ${taskFilter === 'pending' ? 'active-filter' : ''}" onclick="setTaskFilter('pending')" style="text-align:left;cursor:pointer"><div class="stat-num">${pending.length}</div><div class="muted">Pending review</div></button>
+          <button class="stat ${taskFilter === 'approved' ? 'active-filter' : ''}" onclick="setTaskFilter('approved')" style="text-align:left;cursor:pointer"><div class="stat-num">${approved.length}</div><div class="muted">Approved / completed</div></button>
+          <button class="stat ${taskFilter === 'rejected' ? 'active-filter' : ''}" onclick="setTaskFilter('rejected')" style="text-align:left;cursor:pointer"><div class="stat-num">${rejected.length}</div><div class="muted">Rejected / returned</div></button>
+        </div>
+        <div class="card"><div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks in this enclosure on ${selectedDateLabel()}.</div>`}</div>`;
       qs('main').innerHTML = `
         <div class="topbar">
           <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
@@ -452,17 +479,12 @@ async function completeInviteRegistration(event) {
             </div>
           </div>
         </div>
-        <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-          <button class="stat ${taskFilter === 'all' ? 'active-filter' : ''}" onclick="setTaskFilter('all')" style="text-align:left;cursor:pointer"><div class="stat-num">${total}</div><div class="muted">All tasks</div></button>
-          <button class="stat ${taskFilter === 'pending' ? 'active-filter' : ''}" onclick="setTaskFilter('pending')" style="text-align:left;cursor:pointer"><div class="stat-num">${pending.length}</div><div class="muted">Pending review</div></button>
-          <button class="stat ${taskFilter === 'approved' ? 'active-filter' : ''}" onclick="setTaskFilter('approved')" style="text-align:left;cursor:pointer"><div class="stat-num">${approved.length}</div><div class="muted">Approved / completed</div></button>
-          <button class="stat ${taskFilter === 'rejected' ? 'active-filter' : ''}" onclick="setTaskFilter('rejected')" style="text-align:left;cursor:pointer"><div class="stat-num">${rejected.length}</div><div class="muted">Rejected / returned</div></button>
-        </div>
-        <div class="card">
-          <div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>
-          ${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks due on ${selectedDateLabel()}.</div>`}
-        </div>`;
+        ${!selectedZoneId ? zonePicker : !selectedEnclosureId ? enclosurePicker : taskView}`;
     }
+    function selectTaskZone(zoneId){ selectedZoneId = zoneId; selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
+    function selectTaskEnclosure(enclosureId){ selectedEnclosureId = enclosureId; taskFilter = 'all'; renderOperations(); }
+    function showTaskZones(){ selectedZoneId = ''; selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
+    function showTaskEnclosures(){ selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
     function setTaskFilter(filter){
       taskFilter = filter;
       renderOperations();
@@ -470,16 +492,22 @@ async function completeInviteRegistration(event) {
     function selectTaskDate(value){
       if(!value) return;
       selectedTaskDate = value;
+      selectedZoneId = '';
+      selectedEnclosureId = '';
       renderOperations();
     }
     function moveTaskDate(days){
       const date = new Date(`${selectedTaskDate}T12:00:00`);
       date.setDate(date.getDate() + days);
       selectedTaskDate = localDateKey(date);
+      selectedZoneId = '';
+      selectedEnclosureId = '';
       renderOperations();
     }
     function goToToday(){
       selectedTaskDate = localDateKey(new Date());
+      selectedZoneId = '';
+      selectedEnclosureId = '';
       renderOperations();
     }
     function renderTask(task){

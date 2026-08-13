@@ -15,6 +15,7 @@ const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const evidenceRoutes = require('./routes/evidenceRoutes');
 const invitationRoutes = require('./routes/invitationRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/evidence', evidenceRoutes);
 app.use('/api/invitations', invitationRoutes);
+app.use('/api/files', fileRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'App3.html')));

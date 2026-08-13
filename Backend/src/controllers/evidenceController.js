@@ -2,6 +2,8 @@ const Evidence = require('../models/Evidence');
 const Task = require('../models/Task');
 const { hasPermission } = require('../middleware/permissionMiddleware');
 const { fileToEvidenceFile } = require('../middleware/uploadMiddleware');
+const fs = require('fs/promises');
+const path = require('path');
 
 const evidencePopulate = [
   {
@@ -320,11 +322,38 @@ async function updateEvidenceStatus(req, res) {
   });
 }
 
+async function deleteEvidenceFile(req, res) {
+  const evidence = await Evidence.findById(req.params.id);
+  if (!evidence) return res.status(404).json({ message: 'Evidence not found.' });
+  if (evidence.submittedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'Only the keeper who submitted this evidence can delete its files.' });
+  }
+  if (evidence.status === 'approved') {
+    return res.status(409).json({ message: 'Approved evidence files cannot be deleted.' });
+  }
+  const file = evidence.files.id(req.params.fileId);
+  if (!file) return res.status(404).json({ message: 'Evidence file not found.' });
+
+  if (file.storageKey) {
+    const uploadRoot = path.resolve(__dirname, '..', '..', 'uploads');
+    const filePath = path.resolve(uploadRoot, file.storageKey);
+    if (filePath.startsWith(`${uploadRoot}${path.sep}`)) {
+      await fs.unlink(filePath).catch((error) => {
+        if (error.code !== 'ENOENT') throw error;
+      });
+    }
+  }
+  evidence.files.pull(file._id);
+  await evidence.save();
+  return res.json({ message: 'Evidence file deleted.' });
+}
+
 module.exports = {
   listEvidence,
   getEvidenceById,
   createEvidence,
   updateEvidence,
   submitEvidence,
-  updateEvidenceStatus
+  updateEvidenceStatus,
+  deleteEvidenceFile
 };

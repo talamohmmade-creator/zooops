@@ -67,7 +67,7 @@
     .location-choice{text-align:left;cursor:pointer;color:var(--text);font:inherit;min-height:88px;transition:.15s ease}
     .location-choice:hover{border-color:var(--green);background:#e8faf8;transform:translateY(-1px)}
     .location-choice b{font-size:18px;margin-bottom:8px}.location-choice span{display:block;color:var(--dim)}
-    .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.calendar-weekday{text-align:center;color:var(--dim);font-size:12px;font-weight:800;padding:7px}.calendar-day{min-height:105px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px;text-align:left;cursor:pointer;color:var(--text)}.calendar-day.outside{opacity:.42}.calendar-day.selected{border:2px solid var(--green);background:#e8faf8}.calendar-number{font-weight:900}.calendar-dot{font-size:11px;padding:3px 5px;border-radius:5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#e8f0ff;color:var(--blue)}.calendar-dot.reminder{background:#fff3dc;color:#c47b00}.agenda-item{border-left:4px solid var(--blue)}.agenda-item.reminder{border-left-color:var(--amber)}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.calendar-weekday{text-align:center;color:var(--dim);font-size:12px;font-weight:800;padding:7px}.calendar-day{min-height:105px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px;text-align:left;cursor:pointer;color:var(--text)}.calendar-day.outside{opacity:.42}.calendar-day.selected{border:2px solid var(--green);background:#e8faf8}.calendar-number{font-weight:900}.calendar-dot{font-size:11px;padding:3px 5px;border-radius:5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#e8f0ff;color:var(--blue)}.calendar-dot.task-link:hover{background:#cfddff;text-decoration:underline}.calendar-dot.reminder{background:#fff3dc;color:#c47b00}.agenda-item{border-left:4px solid var(--blue)}.agenda-item.task-link{cursor:pointer}.agenda-item.task-link:hover{background:#e8faf8}.agenda-item.reminder{border-left-color:var(--amber)}
     .profile-head{display:flex;align-items:center;gap:16px}
     .avatar{width:74px;height:74px;border-radius:50%;background:#e8faf8;border:2px solid var(--green);display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--green)}
     @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid,.main>.grid{grid-template-columns:1fr!important}.attachment-card{grid-template-columns:130px 1fr}.photo-collage{grid-template-columns:repeat(2,minmax(0,145px))}.photo-collage .evidence-thumb{width:145px}}
@@ -138,9 +138,11 @@
     let selectedTaskDate = localDateKey(new Date());
     let selectedZoneId = '';
     let selectedEnclosureId = '';
+    let focusedTaskId = '';
     let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     let calendarSelectedDate = localDateKey(new Date());
     let calendarData = { tasks: [], reminders: [] };
+    let teamUsers = [];
     const editingEvidenceTasks = new Set();
     const savingEvidenceTasks = new Set();
     const pendingEvidenceFiles = new Map();
@@ -158,11 +160,12 @@
       'users.create': 'Invite users',
       'users.manage': 'Manage users',
       'reports.read': 'View reports',
+      'calendar.create': 'Add personal calendar tasks',
       'calendar.manage': 'Manage calendar'
     };
 
     function roleName(){ return currentUser?.role?.name || currentUser?.role || ''; }
-    function canCreateTask(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
+    function canCreateTask(){ return userPermissions().includes('tasks.create') || userPermissions().includes('tasks.manage'); }
     function canReview(){ return ['Supervisor','Management','Admin'].includes(roleName()); }
     function canSubmitEvidence(){ return roleName() === 'Keeper'; }
     function userPermissions(){
@@ -408,6 +411,13 @@ async function completeInviteRegistration(event) {
       }
     }
     async function startApp(){
+      try{
+        const freshAccount = await api('/auth/me');
+        currentUser = freshAccount.user;
+        localStorage.setItem('zooops_user', JSON.stringify(currentUser));
+      }catch(error){
+        signOut(); return;
+      }
       qs('login-screen').style.display = 'none';
       qs('app').style.display = 'block';
       qs('side-user').textContent = currentUser.fullName;
@@ -427,8 +437,11 @@ async function completeInviteRegistration(event) {
       if(canInviteUsers()){
         const invitationData = await api('/invitations');
         invitations = invitationData.invitations || [];
+        const teamData = await api('/users');
+        teamUsers = teamData.users || [];
       } else {
         invitations = [];
+        teamUsers = [];
       }
     }
     function setView(view){ currentView = view; render(); }
@@ -458,11 +471,12 @@ async function completeInviteRegistration(event) {
       const approved = locationTasks.filter((task) => approvedStatuses.includes(task.status));
       const rejected = locationTasks.filter((task) => rejectedStatuses.includes(task.status));
       const pending = locationTasks.filter((task) => task.status !== 'draft' && !approvedStatuses.includes(task.status) && !rejectedStatuses.includes(task.status));
-      const filteredTasks = taskFilter === 'approved' ? approved
+      let filteredTasks = taskFilter === 'approved' ? approved
         : taskFilter === 'rejected' ? rejected
         : taskFilter === 'draft' ? drafts
         : taskFilter === 'pending' ? pending
         : locationTasks;
+      if(focusedTaskId) filteredTasks = filteredTasks.filter((task) => task._id === focusedTaskId);
       const selectedZone = options.zones.find((zone) => zone._id === selectedZoneId);
       const selectedEnclosure = options.enclosures.find((enclosure) => enclosure._id === selectedEnclosureId);
       const zoneEnclosures = options.enclosures.filter((enclosure) => (enclosure.zone?._id || enclosure.zone) === selectedZoneId);
@@ -482,7 +496,7 @@ async function completeInviteRegistration(event) {
           <button class="stat ${taskFilter === 'approved' ? 'active-filter' : ''}" onclick="setTaskFilter('approved')" style="text-align:left;cursor:pointer"><div class="stat-num">${approved.length}</div><div class="muted">Approved / completed</div></button>
           <button class="stat ${taskFilter === 'rejected' ? 'active-filter' : ''}" onclick="setTaskFilter('rejected')" style="text-align:left;cursor:pointer"><div class="stat-num">${rejected.length}</div><div class="muted">Rejected / returned</div></button>
         </div>
-        <div class="card"><div class="row space"><div class="section-title">${taskFilter === 'all' ? 'All tasks' : taskFilter === 'draft' ? 'Saved drafts' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks in this enclosure on ${selectedDateLabel()}.</div>`}</div>`;
+        <div class="card"><div class="row space"><div class="section-title">${focusedTaskId ? 'Selected calendar task' : taskFilter === 'all' ? 'All tasks' : taskFilter === 'draft' ? 'Saved drafts' : taskFilter === 'pending' ? 'Pending tasks' : taskFilter === 'approved' ? 'Approved tasks' : 'Rejected / returned tasks'}</div>${focusedTaskId ? '<button class="btn secondary" onclick="clearFocusedTask()">Show all tasks here</button>' : taskFilter !== 'all' ? '<button class="btn secondary" onclick="setTaskFilter(\'all\')">Clear filter</button>' : ''}</div>${filteredTasks.length ? filteredTasks.map(renderTask).join('') : `<div class="muted">No ${taskFilter === 'all' ? '' : taskFilter + ' '}tasks in this enclosure on ${selectedDateLabel()}.</div>`}</div>`;
       qs('main').innerHTML = `
         <div class="topbar">
           <div><h1>My Tasks</h1><div class="muted">View assigned work, progress, evidence, and approval status.</div></div>
@@ -508,6 +522,7 @@ async function completeInviteRegistration(event) {
     function showTaskZones(){ selectedZoneId = ''; selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
     function showTaskEnclosures(){ selectedEnclosureId = ''; taskFilter = 'all'; renderOperations(); }
     function setTaskFilter(filter){
+      focusedTaskId = '';
       taskFilter = filter;
       renderOperations();
     }
@@ -516,6 +531,7 @@ async function completeInviteRegistration(event) {
       selectedTaskDate = value;
       selectedZoneId = '';
       selectedEnclosureId = '';
+      focusedTaskId = '';
       renderOperations();
     }
     function moveTaskDate(days){
@@ -524,12 +540,14 @@ async function completeInviteRegistration(event) {
       selectedTaskDate = localDateKey(date);
       selectedZoneId = '';
       selectedEnclosureId = '';
+      focusedTaskId = '';
       renderOperations();
     }
     function goToToday(){
       selectedTaskDate = localDateKey(new Date());
       selectedZoneId = '';
       selectedEnclosureId = '';
+      focusedTaskId = '';
       renderOperations();
     }
     function renderTask(task){
@@ -797,13 +815,24 @@ async function completeInviteRegistration(event) {
       ].sort((a,b) => new Date(a.at)-new Date(b.at));
       const agenda = itemsForDate(calendarSelectedDate);
       const canAssign = ['Management','Admin','Supervisor'].includes(roleName());
+      const canAddCalendar = userPermissions().includes('calendar.create') || userPermissions().includes('calendar.manage');
       qs('main').innerHTML = `<div class="topbar"><div><h1>Calendar</h1><div class="muted">Assigned tasks appear automatically. Add personal or team reminders.</div></div><span class="tag green">${roleName()} calendar</span></div>
         <div class="card"><div class="row space"><button class="btn secondary" onclick="moveCalendarMonth(-1)">&#8592;</button><h2>${monthStart.toLocaleDateString([], {month:'long',year:'numeric'})}</h2><div class="row"><button class="btn secondary" onclick="calendarToday()">Today</button><button class="btn secondary" onclick="moveCalendarMonth(1)">&#8594;</button></div></div>
-          <div class="calendar-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((day)=>`<div class="calendar-weekday">${day}</div>`).join('')}${cells.map((date)=>{const key=localDateKey(date);const items=itemsForDate(key);return `<button class="calendar-day ${date.getMonth()!==monthStart.getMonth()?'outside':''} ${key===calendarSelectedDate?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="calendar-number">${date.getDate()}</div>${items.slice(0,3).map((item)=>`<div class="calendar-dot ${item.kind==='reminder'?'reminder':''}">${new Date(item.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} ${item.title}</div>`).join('')}${items.length>3?`<div class="muted">+${items.length-3} more</div>`:''}</button>`}).join('')}</div></div>
-        <div class="grid g2"><div class="card"><div class="section-title">${new Date(`${calendarSelectedDate}T12:00:00`).toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'})}</div>${agenda.length?agenda.map((item)=>`<div class="info agenda-item ${item.kind==='reminder'?'reminder':''}" style="margin-bottom:10px"><b>${item.kind==='task'?'Assigned task':'Reminder'} · ${new Date(item.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</b><span>${item.title}</span><div class="muted">${item.assignedTo?.fullName||''}${item.status?' · '+statusLabel(item.status):''}</div></div>`).join(''):'<div class="muted">Nothing scheduled for this day.</div>'}</div>
-          <div class="card"><div class="section-title">${canAssign ? 'Add calendar task / reminder' : 'Add my calendar task'}</div><div class="muted" style="margin-bottom:12px">${canAssign ? 'Create it for yourself or assign it to another team member.' : 'Create your own task or reminder. It will appear only on your calendar.'}</div><div class="field"><div class="label">Title</div><input class="input" id="reminder-title"></div><div class="field"><div class="label">Description</div><textarea class="textarea" id="reminder-description"></textarea></div><div class="grid g2"><div class="field"><div class="label">Date</div><input class="input" type="date" id="reminder-date" value="${calendarSelectedDate}"></div><div class="field"><div class="label">Time</div><input class="input" type="time" id="reminder-time"></div></div>${canAssign?`<div class="field"><div class="label">Assign to</div><select class="select" id="reminder-user"><option value="${currentUser.id}">Myself</option>${(options.users||[]).filter((user)=>user._id!==currentUser.id).map((user)=>`<option value="${user._id}">${user.fullName}</option>`).join('')}</select></div>`:''}<div class="field"><div class="label">Repeat</div><select class="select" id="reminder-repeat"><option value="none">No repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="every_2_weeks">Every 2 weeks</option><option value="monthly">Monthly</option></select></div><button class="btn primary" onclick="createCalendarReminder()">Add to calendar</button><span class="error" id="calendar-message"></span></div></div>`;
+          <div class="calendar-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((day)=>`<div class="calendar-weekday">${day}</div>`).join('')}${cells.map((date)=>{const key=localDateKey(date);const items=itemsForDate(key);return `<button class="calendar-day ${date.getMonth()!==monthStart.getMonth()?'outside':''} ${key===calendarSelectedDate?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="calendar-number">${date.getDate()}</div>${items.slice(0,3).map((item)=>`<div class="calendar-dot ${item.kind==='reminder'?'reminder':'task-link'}" ${item.kind==='task'?`onclick="event.stopPropagation();openCalendarTask('${item._id}')" title="Open task"`:''}>${new Date(item.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} ${item.title}</div>`).join('')}${items.length>3?`<div class="muted">+${items.length-3} more</div>`:''}</button>`}).join('')}</div></div>
+        <div class="grid g2"><div class="card"><div class="section-title">${new Date(`${calendarSelectedDate}T12:00:00`).toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'})}</div>${agenda.length?agenda.map((item)=>`<div class="info agenda-item ${item.kind==='reminder'?'reminder':'task-link'}" style="margin-bottom:10px" ${item.kind==='task'?`onclick="openCalendarTask('${item._id}')" title="Open task"`:''}><b>${item.kind==='task'?'Assigned task':'Reminder'} · ${new Date(item.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</b><span>${item.title}</span><div class="muted">${item.assignedTo?.fullName||''}${item.status?' · '+statusLabel(item.status):''}</div></div>`).join(''):'<div class="muted">Nothing scheduled for this day.</div>'}</div>
+          ${canAddCalendar ? `<div class="card"><div class="section-title">${canAssign ? 'Add calendar task / reminder' : 'Add my calendar task'}</div><div class="muted" style="margin-bottom:12px">${canAssign ? 'Create it for yourself or assign it to another team member.' : 'Temporary access was granted by your manager. This entry appears on your calendar.'}</div><div class="field"><div class="label">Title</div><input class="input" id="reminder-title"></div><div class="field"><div class="label">Description</div><textarea class="textarea" id="reminder-description"></textarea></div><div class="grid g2"><div class="field"><div class="label">Date</div><input class="input" type="date" id="reminder-date" value="${calendarSelectedDate}"></div><div class="field"><div class="label">Time</div><input class="input" type="time" id="reminder-time"></div></div>${canAssign?`<div class="field"><div class="label">Assign to</div><select class="select" id="reminder-user"><option value="${currentUser.id}">Myself</option>${(options.users||[]).filter((user)=>user._id!==currentUser.id).map((user)=>`<option value="${user._id}">${user.fullName}</option>`).join('')}</select></div>`:''}<div class="field"><div class="label">Repeat</div><select class="select" id="reminder-repeat"><option value="none">No repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="every_2_weeks">Every 2 weeks</option><option value="monthly">Monthly</option></select></div><button class="btn primary" onclick="createCalendarReminder()">Add to calendar</button><span class="error" id="calendar-message"></span></div>` : `<div class="card"><div class="section-title">Calendar access</div><div class="muted">You can view tasks assigned to you. Ask a manager if you temporarily need permission to add your own calendar task.</div></div>`}</div>`;
     }
     function selectCalendarDate(key){ calendarSelectedDate=key; renderCalendar(); }
+    function openCalendarTask(taskId){
+      const task = (calendarData.tasks || []).find((item)=>item._id===taskId) || tasks.find((item)=>item._id===taskId);
+      if(!task) return;
+      selectedTaskDate = localDateKey(task.dueDate);
+      selectedZoneId = task.zone?._id || task.zone || '';
+      selectedEnclosureId = task.enclosure?._id || task.enclosure || '';
+      taskFilter = 'all'; focusedTaskId = taskId; currentView = 'operations'; render();
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function clearFocusedTask(){ focusedTaskId=''; renderOperations(); }
     function moveCalendarMonth(direction){ calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+direction,1);calendarSelectedDate=localDateKey(calendarMonth);renderCalendar(); }
     function calendarToday(){ calendarMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);calendarSelectedDate=localDateKey(new Date());renderCalendar(); }
     async function createCalendarReminder(){
@@ -817,8 +846,8 @@ async function completeInviteRegistration(event) {
       qs('main').innerHTML = `
         <div class="topbar">
           <div>
-            <h1>My Profile</h1>
-            <div class="muted">Your ZooOps account details and permissions.</div>
+            <h1>My Profile & Team</h1>
+            <div class="muted">Your account and the profiles and permissions of your team.</div>
           </div>
           <span class="tag green">${roleName() || 'User'} view</span>
         </div>
@@ -846,7 +875,32 @@ async function completeInviteRegistration(event) {
             ? `<div class="muted" style="margin-top:12px">These permissions come from your role and any extra access given during invitation.</div>`
             : ''}
         </div>
+        ${canInviteUsers() ? `<div class="card"><div class="section-title">Team profiles</div><div class="muted" style="margin-bottom:14px">Open a team member and grant or remove temporary access. Changes take effect the next time their app refreshes.</div><div class="grid g2">${teamUsers.filter((user)=>user.id!==currentUser.id).map((user)=>`<button class="info location-choice" onclick="openTeamProfile('${user.id}')"><b>${user.fullName}</b><span>${user.role?.name || 'No role'} · ${user.email}</span><span style="margin-top:7px">${(user.customPermissions||[]).length} extra permission(s)</span></button>`).join('') || '<div class="muted">No other active team members yet.</div>'}</div></div>` : ''}
       `;
+    }
+
+    function openTeamProfile(userId){
+      const user = teamUsers.find((item)=>item.id===userId); if(!user) return;
+      const hasCalendarCreate = (user.customPermissions||[]).includes('calendar.create');
+      const temporaryGrant = (user.temporaryPermissions||[]).find((grant)=>grant.permission==='calendar.create');
+      const roleValues = (user.role?.permissions||[]).flatMap((permission)=>(permission.actions||[]).map((action)=>`${permission.resource}.${action}`));
+      const extraValues = (user.customPermissions||[]).filter((value)=>!roleValues.includes(value));
+      const viewer = document.createElement('div'); viewer.id='team-profile-viewer'; viewer.className='viewer';
+      viewer.onclick=(event)=>{if(event.target===viewer) closeTeamProfile();};
+      viewer.innerHTML=`<div class="viewer-card" style="height:auto;max-height:90vh"><div class="viewer-head"><div><h2 style="margin:0">${user.fullName}</h2><div class="muted">${user.role?.name||'-'} · ${user.email}</div></div><button class="btn secondary viewer-close" onclick="closeTeamProfile()">&times;</button></div><div style="padding:20px;overflow:auto"><div class="section-title">All role permissions</div><div class="file-list">${roleValues.map((value)=>`<span class="tag blue">${permissionLabel(value)}</span>`).join('')||'<span class="muted">None</span>'}</div><div class="section-title" style="margin-top:20px">Extra permissions</div><div class="file-list">${extraValues.map((value)=>`<span class="tag green">${permissionLabel(value)}${temporaryGrant&&value==='calendar.create'?' · until '+new Date(temporaryGrant.expiresAt).toLocaleString():''}</span>`).join('')||'<span class="muted">No extra permissions.</span>'}</div><div class="section-title" style="margin-top:22px">Change access</div><div class="field"><div class="label">Add personal calendar tasks</div><select class="select" id="team-calendar-access"><option value="none" ${!hasCalendarCreate?'selected':''}>No access</option><option value="today" ${temporaryGrant?'selected':''}>Today only (expires automatically)</option><option value="ongoing" ${hasCalendarCreate&&!temporaryGrant?'selected':''}>Ongoing until manager removes it</option></select></div><div class="muted">Choose No access at any time to remove this extra permission immediately.</div><div class="row" style="margin-top:18px"><button class="btn primary" onclick="saveTeamPermissions('${user.id}')">Save permissions</button><span class="error" id="team-permission-message"></span></div></div></div>`;
+      document.body.appendChild(viewer);
+    }
+    function closeTeamProfile(){ document.getElementById('team-profile-viewer')?.remove(); }
+    async function saveTeamPermissions(userId){
+      const access=qs('team-calendar-access')?.value||'none';
+      const permissions=access==='ongoing'?['calendar.create']:[];
+      const endOfToday=new Date(); endOfToday.setHours(23,59,59,999);
+      const temporaryPermissions=access==='today'?[{permission:'calendar.create',expiresAt:endOfToday.toISOString()}]:[];
+      try{
+        const data=await api(`/users/${userId}/permissions`,{method:'PATCH',body:JSON.stringify({permissions,temporaryPermissions})});
+        teamUsers=teamUsers.map((user)=>user.id===userId?data.user:user);
+        closeTeamProfile(); renderProfile();
+      }catch(error){qs('team-permission-message').textContent=error.message;}
     }
 
     function renderCreateTask(){

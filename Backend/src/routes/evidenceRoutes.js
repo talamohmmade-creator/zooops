@@ -5,6 +5,7 @@ const {
   createEvidence,
   updateEvidence,
   submitEvidence,
+  beginEditEvidence,
   updateEvidenceStatus,
   deleteEvidenceFile
 } = require('../controllers/evidenceController');
@@ -19,6 +20,7 @@ router.get('/:id', requireAuth, requirePermission('evidence', 'read'), getEviden
 router.post('/', requireAuth, requirePermission('evidence', 'create'), uploadEvidenceFiles.array('files', 10), createEvidence);
 router.patch('/:id', requireAuth, requirePermission('evidence', 'update'), uploadEvidenceFiles.array('files', 10), updateEvidence);
 router.patch('/:id/submit', requireAuth, requirePermission('evidence', 'update'), submitEvidence);
+router.patch('/:id/edit', requireAuth, requirePermission('evidence', 'update'), beginEditEvidence);
 router.patch('/:id/status', requireAuth, updateEvidenceStatus);
 router.delete('/:id/files/:fileId', requireAuth, deleteEvidenceFile);
 

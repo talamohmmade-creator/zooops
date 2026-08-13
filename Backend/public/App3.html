@@ -580,10 +580,12 @@ async function completeInviteRegistration(event) {
         const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
         const deleteButton = canDelete ? `<button class="delete-file" title="Delete file" onclick="event.stopPropagation();deleteEvidenceFile('${latest._id}','${file._id}')">&times;</button>` : '';
         const extraPhotos = file.fileType === 'photo' && photos.length > 1 ? `<div class="more-overlay">+${photos.length - 1}</div>` : '';
-        const preview = file.fileType === 'photo' ? `<img src="${url}" alt="${file.fileName}">`
+        const officePreview = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+        const preview = file.fileType === 'photo' ? `<img src="${url}" alt="${file.fileName}" onerror="this.parentElement.classList.add('missing-preview');this.replaceWith(document.createTextNode('Photo missing - upload again'))">`
           : file.fileType === 'pdf' ? `<iframe src="${url}#page=1&toolbar=0&navpanes=0" title="${file.fileName}"></iframe>`
           : file.fileType === 'video' ? `<video src="${url}" muted></video>`
-          : `<div style="height:120px;display:grid;place-items:center;background:#e8faf8;color:var(--green);font-size:42px;font-weight:900">${file.fileType === 'document' ? 'DOC' : 'FILE'}</div>`;
+          : file.fileType === 'document' ? `<iframe src="${officePreview}" title="${file.fileName}"></iframe>`
+          : `<div style="height:120px;display:grid;place-items:center;background:#e8faf8;color:var(--green);font-size:42px;font-weight:900">FILE</div>`;
         return `<button class="evidence-thumb" onclick="openEvidenceViewer('${latest._id}',${originalIndex})">${deleteButton}${preview}${extraPhotos}<div class="evidence-thumb-meta"><b>${file.fileType}</b>${file.fileName}</div></button>`;
       }).join('')}</div>`;
     }
@@ -601,14 +603,17 @@ async function completeInviteRegistration(event) {
       const file = viewerState.files[viewerState.index];
       if(!file) return closeEvidenceViewer();
       const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
+      const downloadUrl = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+      const officePreview = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
       const content = file.fileType === 'photo' ? `<img src="${url}" alt="${file.fileName}">`
         : file.fileType === 'pdf' ? `<iframe src="${url}#page=1" title="${file.fileName}"></iframe>`
         : file.fileType === 'video' ? `<video src="${url}" controls autoplay></video>`
-        : `<div style="text-align:center;color:#fff"><div style="font-size:70px;font-weight:900">${file.fileType === 'document' ? 'DOC' : 'FILE'}</div><a class="btn primary" href="${url}" target="_blank" style="display:inline-block;margin-top:20px;text-decoration:none">Open / download file</a></div>`;
+        : file.fileType === 'document' ? `<iframe src="${officePreview}" title="${file.fileName}"></iframe>`
+        : `<div style="text-align:center;color:#fff"><div style="font-size:70px;font-weight:900">FILE</div></div>`;
       const viewer = document.createElement('div');
       viewer.id = 'evidence-viewer'; viewer.className = 'viewer';
       viewer.onclick = (event) => { if(event.target === viewer) closeEvidenceViewer(); };
-      viewer.innerHTML = `<div class="viewer-card"><div class="viewer-head"><div><b>${file.fileName}</b><div class="muted">${viewerState.index + 1} of ${viewerState.files.length}</div></div><button class="btn secondary viewer-close" onclick="closeEvidenceViewer()">&times;</button></div><div class="viewer-body">${content}</div><div class="viewer-foot"><button class="btn secondary" onclick="moveEvidenceViewer(-1)" ${viewerState.files.length < 2 ? 'disabled' : ''}>&#8592; Previous</button><span class="tag blue">${file.fileType}</span><button class="btn secondary" onclick="moveEvidenceViewer(1)" ${viewerState.files.length < 2 ? 'disabled' : ''}>Next &#8594;</button></div></div>`;
+      viewer.innerHTML = `<div class="viewer-card"><div class="viewer-head"><div><b>${file.fileName}</b><div class="muted">${viewerState.index + 1} of ${viewerState.files.length}</div></div><div class="row"><a class="btn primary" href="${downloadUrl}" target="_blank" style="text-decoration:none">Download</a><button class="btn secondary viewer-close" onclick="closeEvidenceViewer()">&times;</button></div></div><div class="viewer-body">${content}</div><div class="viewer-foot"><button class="btn secondary" onclick="moveEvidenceViewer(-1)" ${viewerState.files.length < 2 ? 'disabled' : ''}>&#8592; Previous</button><span class="tag blue">${file.fileType}</span><button class="btn secondary" onclick="moveEvidenceViewer(1)" ${viewerState.files.length < 2 ? 'disabled' : ''}>Next &#8594;</button></div></div>`;
       document.body.appendChild(viewer);
     }
     function moveEvidenceViewer(direction){

@@ -648,7 +648,7 @@ async function completeInviteRegistration(event) {
         const url = file.url && file.url.startsWith('/uploads') ? `${UPLOAD_BASE}${file.url}` : file.url;
         const deleteButton = canDelete ? `<button class="delete-file" title="Delete file" onclick="event.stopPropagation();deleteEvidenceFile('${latest._id}','${file._id}')">&times;</button>` : '';
         const extraPhotos = photoIndex === 3 && photos.length > 4 ? `<div class="more-overlay">+${photos.length - 4}</div>` : '';
-        return `<button class="evidence-thumb" onclick="openEvidenceViewer('${latest._id}',${originalIndex})">${deleteButton}<img src="${url}" alt="${file.fileName}" onerror="this.parentElement.classList.add('missing-preview');this.replaceWith(document.createTextNode('Photo missing'))">${extraPhotos}</button>`;
+        return `<div class="evidence-thumb" role="button" tabindex="0" onclick="openEvidenceViewer('${latest._id}',${originalIndex})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEvidenceViewer('${latest._id}',${originalIndex})}">${deleteButton}<img src="${url}" alt="${file.fileName}" onerror="this.parentElement.classList.add('missing-preview');this.replaceWith(document.createTextNode('Photo missing'))">${extraPhotos}</div>`;
       }).join('');
       const attachmentCards = otherFiles.map((file) => {
         const originalIndex = files.findIndex((item) => item._id === file._id);
@@ -660,7 +660,7 @@ async function completeInviteRegistration(event) {
           : file.fileType === 'document' ? `<iframe src="${officePreview}" title="${file.fileName}"></iframe>`
           : `<div style="height:145px;display:grid;place-items:center;background:#e8faf8;color:var(--green);font-size:34px;font-weight:900">FILE</div>`;
         const badge = file.fileType === 'pdf' ? '<span class="file-badge">PDF</span>' : file.fileType === 'document' ? '<span class="file-badge doc">DOC</span>' : `<span class="file-badge doc">${file.fileType.toUpperCase()}</span>`;
-        return `<button class="evidence-thumb attachment-card" onclick="openEvidenceViewer('${latest._id}',${originalIndex})">${deleteButton}<div class="attachment-preview">${preview}</div><div class="attachment-details">${badge}<strong>${file.fileName}</strong><span class="muted">Click to preview full size</span></div></button>`;
+        return `<div class="evidence-thumb attachment-card" role="button" tabindex="0" onclick="openEvidenceViewer('${latest._id}',${originalIndex})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEvidenceViewer('${latest._id}',${originalIndex})}">${deleteButton}<div class="attachment-preview">${preview}</div><div class="attachment-details">${badge}<strong>${file.fileName}</strong><span class="muted">Click to preview full size</span></div></div>`;
       }).join('');
       return `<div class="evidence-gallery">${photoTiles}${attachmentCards}</div>`;
     }

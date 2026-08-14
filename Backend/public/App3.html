@@ -91,9 +91,11 @@
         <button class="oauth-btn" disabled title="Microsoft login can be added after Microsoft Entra setup">Microsoft</button>
       </div>
       <div class="divider">OR</div>
-      <div class="field"><div class="label">Email address</div><input class="input" id="login-email" autocomplete="off"></div>
-      <div class="field"><div class="label">Password</div><input class="input" id="login-password" type="password" autocomplete="new-password"></div>
-      <button class="btn primary" style="width:100%" onclick="login()">Sign in</button>
+      <form id="login-form" onsubmit="event.preventDefault();login()">
+        <div class="field"><div class="label">Email address</div><input class="input" id="login-email" name="email" type="email" autocomplete="username" required></div>
+        <div class="field"><div class="label">Password</div><input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="btn primary" type="submit" style="width:100%">Sign in</button>
+      </form>
       <button class="btn secondary" style="width:100%;margin-top:10px" onclick="showManagerSetup()">Set up manager account</button>
       <div class="muted" style="margin-top:14px;text-align:center;font-size:13px;line-height:1.5">Managers use the setup button once. Other team members must open the invitation link sent by their manager. Your role and windows are selected automatically after sign-in.</div>
       <div class="error" id="login-error"></div>

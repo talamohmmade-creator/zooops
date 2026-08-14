@@ -13,10 +13,9 @@
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
     button,input,select,textarea{font:inherit}
-    .login-screen{min-height:100vh;display:grid;place-items:center;background:
-      linear-gradient(rgba(242,245,248,.25),rgba(242,245,248,.6)),
-      url("https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=1600&q=80") center/cover}
-    .login-card{width:min(460px,92vw);background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:32px}
+    .login-screen{min-height:100vh;display:grid;place-items:center;padding:30px;background:linear-gradient(rgba(0,47,65,.06),rgba(0,47,65,.12)),url("./dolphin-login-background.png") center/cover fixed}
+    .login-card{width:min(650px,94vw);background:rgba(222,250,250,.48);border:1px solid rgba(255,255,255,.42);border-radius:3px;box-shadow:0 24px 70px rgba(6,34,48,.25);padding:42px 54px;backdrop-filter:blur(2px)}
+    .login-wordmark{text-align:center;margin-bottom:26px}.login-wordmark .badge{margin:0 auto 12px;width:62px;height:62px;font-size:20px}.login-wordmark h1{font-size:46px;line-height:1;margin:0;color:#112650}.login-wordmark h1 span{color:var(--green)}.login-wordmark p{margin:9px 0 0;color:#28485f;font-weight:700}.login-card .input{background:rgba(255,255,255,.94);border-radius:4px;padding:12px 14px}.login-card .btn{border-radius:4px}.login-card .btn.primary{background:#112650}.login-card .oauth-btn{width:100%;border:0;border-radius:4px;background:#112650;color:#fff;margin-top:11px;font-size:16px}.password-wrap{position:relative}.password-wrap .input{padding-right:48px}.password-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:34px;border:0;background:transparent;cursor:pointer;font-size:18px;color:#112650}.manager-setup-link{display:block;margin:20px auto 0;border:0;background:transparent;color:#112650;text-decoration:underline;font-weight:800;cursor:pointer}
     .brand{display:flex;gap:14px;align-items:center;margin-bottom:28px}
     .badge{width:48px;height:48px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800}
     .brand-title{font-size:22px;font-weight:800}.muted{color:var(--dim)}
@@ -73,31 +72,21 @@
     .profile-head{display:flex;align-items:center;gap:16px}
     .avatar{width:74px;height:74px;border-radius:50%;background:#e8faf8;border:2px solid var(--green);display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--green)}
     @media(max-width:980px){.sidebar{position:static;width:auto}.main{margin-left:0}.task{grid-template-columns:1fr}.g2,.g3,.info-grid,.main>.grid{grid-template-columns:1fr!important}.attachment-card{grid-template-columns:130px 1fr}.photo-collage{grid-template-columns:repeat(2,minmax(0,145px))}.photo-collage .evidence-thumb{width:145px}}
+    @media(max-width:600px){.login-screen{padding:14px}.login-card{padding:28px 22px}.login-wordmark h1{font-size:38px}.login-wordmark p{font-size:13px}}
   </style>
 </head>
 <body>
   <section class="login-screen" id="login-screen">
     <div class="login-card" id="login-card">
-      <div class="brand">
-        <div class="badge">WZC</div>
-        <div><div class="brand-title">Worldwide Zoo Consultants</div></div>
-      </div>
-      <div class="login-heading">
-        <h1>Welcome to ZooOps</h1>
-        <div class="muted">Sign in to continue</div>
-      </div>
-      <div class="oauth-grid">
-        <button class="oauth-btn" onclick="loginWithGoogle()">Google</button>
-        <button class="oauth-btn" disabled title="Microsoft login can be added after Microsoft Entra setup">Microsoft</button>
-      </div>
-      <div class="divider">OR</div>
+      <div class="login-wordmark"><div class="badge">WZC</div><h1>Zoo<span>Ops</span></h1><p>Worldwide Zoo Consultants</p></div>
       <form id="login-form" onsubmit="event.preventDefault();login()">
-        <div class="field"><div class="label">Email address</div><input class="input" id="login-email" name="email" type="email" autocomplete="username" required></div>
-        <div class="field"><div class="label">Password</div><input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required></div>
+        <div class="field"><div class="label">Email address</div><input class="input" id="login-email" name="email" type="email" autocomplete="username" placeholder="Email address" required></div>
+        <div class="field"><div class="label">Password</div><div class="password-wrap"><input class="input" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Password" required><button class="password-eye" type="button" onclick="toggleLoginPassword()" aria-label="Show or hide password" title="Show or hide password">&#128065;</button></div></div>
         <button class="btn primary" type="submit" style="width:100%">Sign in</button>
       </form>
-      <button class="btn secondary" style="width:100%;margin-top:10px" onclick="showManagerSetup()">Set up manager account</button>
-      <div class="muted" style="margin-top:14px;text-align:center;font-size:13px;line-height:1.5">Managers use the setup button once. Other team members must open the invitation link sent by their manager. Your role and windows are selected automatically after sign-in.</div>
+      <button class="oauth-btn" onclick="loginWithGoogle()"><b style="font-size:22px;margin-right:9px">G</b> Continue with Google</button>
+      <button class="manager-setup-link" onclick="showManagerSetup()">First-time manager setup</button>
+      <div class="muted" style="margin-top:12px;text-align:center;font-size:12px;line-height:1.5;color:#38566b">Invited team members sign in using the email address from their invitation.</div>
       <div class="error" id="login-error"></div>
     </div>
   </section>
@@ -324,6 +313,10 @@ async function completeInviteRegistration(event) {
     errorBox.textContent = error.message;
   }
 }
+    function toggleLoginPassword(){
+      const input=qs('login-password');
+      if(input) input.type=input.type==='password'?'text':'password';
+    }
     async function login(){
       qs('login-error').textContent = '';
       try{

@@ -63,6 +63,7 @@
     .viewer{position:fixed;inset:0;z-index:1000;background:rgba(15,25,35,.88);display:grid;place-items:center;padding:30px}.viewer-card{width:min(1000px,94vw);height:min(760px,90vh);background:#fff;border-radius:16px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}.viewer-head,.viewer-foot{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}.viewer-body{background:#1c2733;display:grid;place-items:center;min-height:0}.viewer-body img,.viewer-body video{max-width:100%;max-height:100%;object-fit:contain}.viewer-body iframe{width:100%;height:100%;border:0;background:#fff}.viewer-close{font-size:25px}
     .upload-picker{margin:10px 0;padding:12px;border:2px dashed #bdd3df;border-radius:14px;background:#fff}.upload-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.upload-label{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:#e8faf8;color:var(--green);font-weight:800;cursor:pointer}.pending-files{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}.pending-file{position:relative;width:118px;height:118px;border:1px solid var(--border);border-radius:11px;background:#f5f8fb;overflow:hidden}.pending-preview{width:100%;height:78px;border:0;padding:0;background:#e8edf2;cursor:pointer;display:grid;place-items:center}.pending-preview img,.pending-preview video,.pending-preview iframe{width:100%;height:78px;object-fit:cover;border:0;pointer-events:none}.pending-file-icon{font-size:20px;font-weight:900;color:var(--green)}.pending-file-info{padding:6px 8px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pending-remove{position:absolute;right:4px;top:4px;z-index:2;width:23px;height:23px;border:0;border-radius:50%;background:#1f2d3d;color:#fff;font-size:17px;line-height:20px;cursor:pointer}
     .task-chat{grid-column:1/-1;border-top:1px solid var(--border);padding-top:14px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;padding:5px}.chat-message{max-width:78%;padding:9px 12px;border-radius:12px;background:#fff;border:1px solid var(--border)}.chat-message.mine{align-self:flex-end;background:#e8faf8;border-color:#94dcd7}.chat-message .chat-meta{font-size:11px;color:var(--dim);margin-bottom:4px}.chat-message .mention{color:var(--blue);font-weight:800}.chat-compose{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}.chat-compose textarea{min-height:56px}
+    .assistant-shell{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}.assistant-answer{background:#e8faf8;border:1px solid #a7dfda;border-radius:14px;padding:16px;line-height:1.55}.assistant-suggestion{display:block;width:100%;text-align:left;margin:7px 0;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);cursor:pointer}.assistant-suggestion:hover{border-color:var(--green);background:#e8faf8}@media(max-width:850px){.assistant-shell{grid-template-columns:1fr}}
     .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}.stat-num{font-size:30px;font-weight:900}
     .stat.active-filter{border:2px solid var(--green);background:#e8faf8;box-shadow:0 10px 22px rgba(22,166,160,.14)}
     .location-choice{text-align:left;cursor:pointer;color:var(--text);font:inherit;min-height:88px;transition:.15s ease}
@@ -111,6 +112,7 @@
       <div class="nav-item active" data-view="operations" onclick="setView('operations')">My Tasks</div>
       <div class="nav-item" data-view="profile" onclick="setView('profile')">My Profile</div>
       <div class="nav-item" data-view="calendar" onclick="setView('calendar')">Calendar</div>
+      <div class="nav-item" data-view="assistant" onclick="setView('assistant')">Smart Assistant</div>
       <div class="nav-item" data-view="create" onclick="setView('create')" id="create-nav">Create task</div>
       <div class="nav-item" data-view="invite" onclick="setView('invite')" id="invite-nav">Invite users</div>
       <div class="nav-item" data-view="review" onclick="setView('review')">Evidence review</div>
@@ -145,6 +147,7 @@
     let calendarSelectedDate = localDateKey(new Date());
     let calendarData = { tasks: [], reminders: [] };
     let calendarClickTimer = null;
+    let assistantHistory = [];
     let teamUsers = [];
     const editingEvidenceTasks = new Set();
     const savingEvidenceTasks = new Set();
@@ -464,6 +467,7 @@ async function completeInviteRegistration(event) {
       if(currentView === 'invite') return renderInviteUsers();
       if(currentView === 'profile') return renderProfile();
       if(currentView === 'calendar') return renderCalendar();
+      if(currentView === 'assistant') return renderAssistant();
       if(currentView === 'review') return renderReview();
       renderOperations();
     }
@@ -1172,6 +1176,21 @@ async function completeInviteRegistration(event) {
           </div>`).join('') : '<div class="muted">No evidence submitted yet.</div>'}
         </div>`;
     }
+    function renderAssistant(){
+      const today=localDateKey(new Date());
+      const suggestions=['What happened today?','Which tasks are overdue?','What is waiting for approval?','Show rejected tasks','Which tasks are completed?','What happened in Zone 2?'];
+      qs('main').innerHTML=`<div class="topbar"><div><h1>Smart Assistant</h1><div class="muted">Free operational answers calculated from your live ZooOps data.</div></div><span class="tag green">No paid AI required</span></div><div class="assistant-shell"><div><div class="card"><div class="grid g2"><div class="field"><div class="label">Date</div><input class="input" type="date" id="assistant-date" value="${today}"></div><div class="field"><div class="label">Ask about tasks, evidence, keepers, zones, or approvals</div><input class="input" id="assistant-question" placeholder="What happened today?" onkeydown="if(event.key==='Enter')askSmartAssistant()"></div></div><button class="btn primary" id="assistant-ask" onclick="askSmartAssistant()">Ask assistant</button><span class="error" id="assistant-error"></span></div><div id="assistant-results">${assistantHistory.length?assistantHistory.map(renderAssistantAnswer).join(''):'<div class="card muted">Ask a question or choose an example. Answers respect your role permissions.</div>'}</div></div><div class="card"><div class="section-title">Try asking</div>${suggestions.map((question)=>`<button class="assistant-suggestion" onclick="useAssistantSuggestion('${question.replace(/'/g,"\\'")}')">${question}</button>`).join('')}<div class="muted" style="margin-top:14px">Managers see accessible team operations. Keepers see only their assigned tasks.</div></div></div>`;
+    }
+    function renderAssistantAnswer(result){
+      return `<div class="card"><div class="muted">${result.question}</div><h2 style="margin:6px 0 12px">${result.heading}</h2><div class="assistant-answer">${formatChatMessage(result.answer)}</div>${result.tasks?.length?`<div class="section-title" style="margin-top:16px">Related tasks</div><div style="display:grid;gap:8px">${result.tasks.map((task)=>`<button class="info location-choice" onclick="openAssistantTask('${task._id}','${task.dueDate}','${task.zone?._id||task.zone||''}','${task.enclosure?._id||task.enclosure||''}')"><b>${task.title}</b><span>${task.assignedTo?.fullName||''} · ${statusLabel(task.status)}</span></button>`).join('')}</div>`:''}</div>`;
+    }
+    function useAssistantSuggestion(question){qs('assistant-question').value=question;askSmartAssistant();}
+    async function askSmartAssistant(){
+      const question=qs('assistant-question').value.trim();const date=qs('assistant-date').value;if(!question)return;
+      const button=qs('assistant-ask');button.disabled=true;button.textContent='Checking ZooOps...';qs('assistant-error').textContent='';
+      try{const data=await api('/assistant/ask',{method:'POST',body:JSON.stringify({question,date})});assistantHistory.unshift({...data,question});renderAssistant();}catch(error){qs('assistant-error').textContent=error.message;button.disabled=false;button.textContent='Ask assistant';}
+    }
+    function openAssistantTask(taskId,date,zoneId,enclosureId){selectedTaskDate=localDateKey(date);selectedZoneId=zoneId;selectedEnclosureId=enclosureId;focusedTaskId=taskId;taskFilter='all';currentView='operations';render();window.scrollTo({top:0,behavior:'smooth'});}
     const urlParams = new URLSearchParams(window.location.search);
     const inviteTokenFromUrl = urlParams.get('invite');
     const oauthTokenFromUrl = urlParams.get('oauthToken');
